@@ -1,6 +1,7 @@
 import copy
 import random
 import pygame
+import classes
 
 #def isOnCard(mouse_pos, cards):
 #    for card in cards:
@@ -19,6 +20,7 @@ smaller_font = pygame.font.Font('freesansbold.ttf', 36)
 turns = 0
 
 deck = list(range(1,21))
+hand = list()
 random.shuffle(deck)
 print(deck)
 print(deck.pop(0))

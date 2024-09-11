@@ -1,12 +1,22 @@
+class CardTemplate(object):
+    def __init__(self, name, img, text):
+        self.name = name
+        self.img = img
+        self.text = text
+    
+
+    def effect(self):
+        pass
+
+
+
 class Card(object):
     card_type = None
 
     
-    def __init__(self, id, name, img, text, duelist):
+    def __init__(self, id, cardTemplate, duelist):
         self.id = id
-        self.name = name
-        self.img = img
-        self.text = text
+        self.cardTemplate = cardTemplate
         self.card_owner = duelist
         self.current_user = None
         self.is_set = False
@@ -23,7 +33,7 @@ class Card(object):
         return self.current_user
         
     def getName(self):
-        return self.name
+        return self.cardTemplate.name
         
     def getType(self):
         return self.card_type
@@ -67,27 +77,27 @@ class SpellOrTrapCard(Card):
     will_animate = False
     single_card_animation = False
 
-def __init__(self, id, name, img, text, duelist, spell_or_trap_type):
-    super().__init__(id, name, img, text, duelist)
-    self.spell_or_trap_type = spell_or_trap_type
-    self.set_for_ai = True
-    self.has_been_activated = False
-    
-def getSpellOrTrapType(self):
-    return self.spell_or_trap_type
-    
-def effect(self):
-    return None
-    
-def isActivationValid(self):
-    return self.effect(testing=True)
-    
-def activate(self):
-    self.has_been_activated = True
-    self.is_set = False
-    #self.effect()
-    if self.spell_or_trap_type == "Normal":
-        self.current_zone.removeCardFromZone(self, "To graveyard")
+    def __init__(self, id, name, img, text, duelist, spell_or_trap_type):
+        super().__init__(id, name, img, text, duelist)
+        self.spell_or_trap_type = spell_or_trap_type
+        self.set_for_ai = True
+        self.has_been_activated = False
+        
+    def getSpellOrTrapType(self):
+        return self.spell_or_trap_type
+        
+    def effect(self):
+        return None
+        
+    def isActivationValid(self):
+        return self.effect(testing=True)
+        
+    def activate(self):
+        self.has_been_activated = True
+        self.is_set = False
+        #self.effect()
+        if self.spell_or_trap_type == "Normal":
+            self.current_zone.removeCardFromZone(self, "To graveyard")
 
 class SpellCard(SpellOrTrapCard):
     card_type = "Spell"

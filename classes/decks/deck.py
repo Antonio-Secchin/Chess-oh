@@ -1,17 +1,16 @@
 class Deck(object):
-    def __init__(self, player, size = 20, cards = None):
+    def __init__(self, player, size = 20):
         self.size = size
         self.actual_size = size
-        self.cards = list(cards)
-        self.gy = list(None)
+        self.cards = list()
+        self.gy = list()
         self.player = player
 
     def AddToDeck(self, card = None, cards = None):
         if card:
-            self.cards.__add__(card)
+            self.cards.append(card)  # Use append para adicionar um único card
         if cards:
-            for c in cards:
-                self.cards.__add__(c)
+            self.cards.extend(cards)  # Use extend para adicionar uma lista de cards
 
     def Draw(self, qtd):
         aux = ()
@@ -21,5 +20,5 @@ class Deck(object):
     
     def SendToGrave(self, qtd):
         for _ in range(qtd):
-            self.gy.__add__(self.cards.pop())  # Adiciona a carta como um item na tupla
+            self.gy.append(self.cards.pop())  # Adiciona a carta como um item na tupla
         

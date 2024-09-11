@@ -8,6 +8,13 @@ import classes
 #        if mouse_pos[0] > card[0] and mouse_pos[0] < card[0] + x_scale and mouse_pos[1] < card[1]:
 #            card.scale()
 
+def ler_imagem(caminho: str, tamanho: tuple[int, int]):
+    image = pygame.image.load(caminho)
+    image = pygame.transform.scale(image, tamanho)
+    image = image.convert_alpha()
+    return image
+
+
 pygame.init()
 width = 1200
 height = 1000
@@ -18,6 +25,7 @@ timer = pygame.time.Clock()
 font = pygame.font.Font('freesansbold.ttf', 44)
 smaller_font = pygame.font.Font('freesansbold.ttf', 36)
 turns = 0
+player_white = "white"
 
 deck = list(range(1,21))
 hand = list()
@@ -25,21 +33,33 @@ random.shuffle(deck)
 print(deck)
 print(deck.pop(0))
 print(deck)
-# Carregar as imagens das cartas (suponha que você tenha as imagens)
-card1 = pygame.image.load('cards/exploracao_duvidosa.png')  # substitua pelo caminho correto
-card2 = pygame.image.load('cards/ganancia_duvidosa.png')
-card3 = pygame.image.load('cards/sacrificio_planejado.png')
-card4 = pygame.image.load('cards/cardback_black.jpg')
-card5 = pygame.image.load('cards/cardback_white.jpg')
 
+#Carregando as imagens
 x_scale = 150
 y_scale = 250
-# Redimensionar as imagens se necessário
-card1 = pygame.transform.scale(card1, (x_scale,y_scale))  # Tamanho ajustado para as cartas
-card2 = pygame.transform.scale(card2, (x_scale,y_scale))
-card3 = pygame.transform.scale(card3, (x_scale,y_scale))
-card4 = pygame.transform.scale(card4, (x_scale,y_scale))
-card5 = pygame.transform.scale(card5, (x_scale,y_scale))
+# Carregar as imagens das cartas (suponha que você tenha as imagens)
+exp_duvi_img = ler_imagem('cards/exploracao_duvidosa.png', (x_scale,y_scale))
+
+gan_duvi_img = ler_imagem('cards/ganancia_duvidosa.png', (x_scale,y_scale))
+#card1 = pygame.image.load('cards/exploracao_duvidosa.png')  # substitua pelo caminho correto
+
+sac_plan_img = ler_imagem('cards/sacrificio_planejado.png', (x_scale,y_scale))
+
+cardBackBlack = ler_imagem('cards/cardback_black.jpg',(x_scale,y_scale))
+cardBackWhite = ler_imagem('cards/cardback_white.jpg',(x_scale,y_scale))
+
+#Criando os templates das cartas
+
+sac_plan = classes.CardTemplate("Sacrifício Planejado", exp_duvi_img, "Sacrifique uma torre, pule o seu próximo turno. No seu turno seguinte você terá dois turnos para jogar.")
+
+deck_white = classes.Deck(player_white,20)
+
+deck_white.AddToDeck(card = sac_plan)
+
+card_drawn = deck_white.Draw(1)
+
+for card in card_drawn:
+    print(card.name)
 
 # Definir as posições das cartas
 card1_pos = (100, height - y_scale)
@@ -56,15 +76,15 @@ while run:
     timer.tick(fps)
     screen.fill('black')
 
-    screen.blit(card1, card1_pos)
-    screen.blit(card2, card2_pos)
-    screen.blit(card3, card3_pos)
-    #screen.blit(card4, card4_pos)
-    x = 0
-    for i in range(0,5):
-        screen.blit(card5, (width - x_scale - 25 + x, 25 - x))
-        screen.blit(card4, (width - x_scale - 25 + x, height - y_scale -x))
-        x += 5
+    # screen.blit(card1, card1_pos)
+    # screen.blit(card2, card2_pos)
+    # screen.blit(card3, card3_pos)
+    # #screen.blit(card4, card4_pos)
+    # x = 0
+    # for i in range(0,5):
+    #     screen.blit(card5, (width - x_scale - 25 + x, 25 - x))
+    #     screen.blit(card4, (width - x_scale - 25 + x, height - y_scale -x))
+    #     x += 5
 
     pygame.display.flip()
 

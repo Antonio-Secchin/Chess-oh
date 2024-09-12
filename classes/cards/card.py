@@ -4,6 +4,8 @@ class CardTemplate(object):
         self.img = img
         self.text = text
     
+    def get_img(self):
+        return self.img
 
     def effect(self):
         pass

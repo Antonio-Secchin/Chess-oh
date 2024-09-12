@@ -13,7 +13,10 @@ class Deck(object):
             self.cards.extend(cards)  # Use extend para adicionar uma lista de cards
 
     def Draw(self, qtd):
+        if self.actual_size == 0:
+            return None
         aux = ()
+        self.actual_size -= qtd
         for _ in range(qtd):
             aux += (self.cards.pop(),)  # Adiciona a carta como um item na tupla
         return aux

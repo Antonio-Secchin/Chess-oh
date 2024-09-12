@@ -54,12 +54,16 @@ sac_plan = classes.CardTemplate("Sacrifício Planejado", exp_duvi_img, "Sacrifiq
 
 deck_white = classes.Deck(player_white,20)
 
-deck_white.AddToDeck(card = sac_plan)
+for _ in range(20):
+    deck_white.AddToDeck(card = sac_plan)
 
-card_drawn = deck_white.Draw(1)
 
-for card in card_drawn:
-    print(card.name)
+hand = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
+
+#card_drawn = deck_white.Draw(1)
+
+# for card in card_drawn:
+#     print(card.name)
 
 # Definir as posições das cartas
 card1_pos = (100, height - y_scale)
@@ -76,15 +80,16 @@ while run:
     timer.tick(fps)
     screen.fill('black')
 
+    hand.DrawHand(screen=screen)
     # screen.blit(card1, card1_pos)
     # screen.blit(card2, card2_pos)
     # screen.blit(card3, card3_pos)
     # #screen.blit(card4, card4_pos)
-    # x = 0
-    # for i in range(0,5):
-    #     screen.blit(card5, (width - x_scale - 25 + x, 25 - x))
-    #     screen.blit(card4, (width - x_scale - 25 + x, height - y_scale -x))
-    #     x += 5
+    x = 0
+    for i in range(round(deck_white.actual_size/4)):
+        screen.blit(cardBackWhite, (width - x_scale - 25 + x, 25 - x))
+        screen.blit(cardBackBlack, (width - x_scale - 25 + x, height - y_scale -x))
+        x += 5
 
     pygame.display.flip()
 
@@ -92,6 +97,12 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_e:
+                hand.AddToHand(cards=deck_white.Draw(1))
     mouse_pos = pygame.mouse.get_pos()
+    
+    # Nao tive ainda a visao pra fazer mas tem algo feito la so falta aumentar
+    #hand.is_mouse_on_card(mouse_pos)
 
 pygame.quit

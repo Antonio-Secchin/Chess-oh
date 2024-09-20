@@ -38,6 +38,13 @@ captured_black_start_x = board_x - 70  # To the left of the board
 captured_black_start_y = board_y
 captured_piece_spacing = 50  # Space between captured pieces
 
+# Define forfeit button area
+forfeit_width = square_size * 2
+forfeit_height = square_size
+forfeit_x = board_x + board_width + 20
+forfeit_y = board_y + board_height - forfeit_height
+forfeit_button_rect = pygame.Rect(forfeit_x, forfeit_y, forfeit_width, forfeit_height)
+
 # Data structures for chess game
 white_pieces = ['rook', 'knight', 'bishop', 'king', 'queen', 'bishop', 'knight', 'rook',
                 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
@@ -51,7 +58,7 @@ captured_pieces_white = []
 captured_pieces_black = []
 # 0 - whites turn no selection: 1-whites turn piece selected: 2- black turn no selection, 3 - black turn piece selected
 turn_step = 0
-selection = 100
+selection = None
 valid_moves = []
 
 # load in game piece images (queen, king, rook, bishop, knight, pawn) x 2
@@ -127,10 +134,10 @@ piece_list = ['pawn', 'queen', 'king', 'knight', 'rook', 'bishop']
 counter = 0
 winner = ''
 game_over = False
-white_ep = (100, 100)
-black_ep = (100, 100)
+white_ep = None
+black_ep = None
 white_promote = False
 black_promote = False
-promo_index = 100
+promo_index = None
 check = False
 castling_moves = []

@@ -16,7 +16,7 @@ points = {
 }
 
 turn_step = 0
-selection = 100
+selection = None
 valid_moves = []
 
 # Função para calcular a posição de uma peça no tabuleiro
@@ -117,10 +117,6 @@ card3_pos = (420, height - y_scale)
 card4_pos = (1000,height - y_scale)
 card5_pos = (1000,0)
 
-# Initialize options
-black_options = check_options(black_pieces, black_locations, 'black')
-white_options = check_options(white_pieces, white_locations, 'white')
-
 run = True
 while run:
     # run game at our framerate and fill screen with bg color
@@ -137,9 +133,11 @@ while run:
     draw_check()
 
     # Desenha os movimentos da peça
-    if selection != 100:
+    if selection is not None:
         valid_moves = check_valid_moves()
         draw_valid(valid_moves)
+    else:
+        valid_moves = []
 
     hand.DrawHand(screen=screen)
 
@@ -157,55 +155,169 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not game_over:
             mouse_x, mouse_y = event.pos
-            # Check if the click is within the board area
             if board_x <= mouse_x < board_x + board_width and board_y <= mouse_y < board_y + board_height:
-                col = int((mouse_x - board_x) / square_size)
-                row = int((mouse_y - board_y) / square_size)
-                click_coords = (col, row)
-                # Handle selection and movement logic
+                x_coord = int((mouse_x - board_x) // square_size)
+                y_coord = int((mouse_y - board_y) // square_size)
+                click_coords = (x_coord, y_coord)
                 if turn_step <= 1:
+
+                    if forfeit_button_rect.collidepoint(mouse_x, mouse_y):
+                        winner = 'black'
+
                     if click_coords in white_locations:
                         selection = white_locations.index(click_coords)
+                        selected_piece = white_pieces[selection]
                         if turn_step == 0:
                             turn_step = 1
-                    elif click_coords in valid_moves and selection != 100:
+                    else:
+                        selection = None  # Deselect if click is not on a piece
+
+                    if click_coords in valid_moves and selection is not None:
+                        white_ep = check_ep(white_locations[selection], click_coords)
                         white_locations[selection] = click_coords
+                        white_moved[selection] = True
+
+                        # Handle capturing black pieces
                         if click_coords in black_locations:
                             black_piece = black_locations.index(click_coords)
                             captured_pieces_white.append(black_pieces[black_piece])
+                            if black_pieces[black_piece] == 'king':
+                                winner = 'white'
                             black_pieces.pop(black_piece)
                             black_locations.pop(black_piece)
+                            black_moved.pop(black_piece)
+                        
+                        # Handle en passant
+                        if black_ep is not None and click_coords == black_ep:
+                            black_piece = black_locations.index((black_ep[0], black_ep[1] - 1))
+                            captured_pieces_white.append(black_pieces[black_piece])
+                            black_pieces.pop(black_piece)
+                            black_locations.pop(black_piece)
+                            black_moved.pop(black_piece)
+                        
+                        # Reset selection BEFORE updating options
+                        selection = None
+                        valid_moves = []
+                        
                         # Update options
                         black_options = check_options(black_pieces, black_locations, 'black')
                         white_options = check_options(white_pieces, white_locations, 'white')
                         turn_step = 2
-                        selection = 100
-                        valid_moves = []
-                else:
+                    # add option to castle
+                    elif selection is not None and selected_piece == 'king':
+                        for q in range(len(castling_moves)):
+                            if click_coords == castling_moves[q][0]:
+                                white_locations[selection] = click_coords
+                                white_moved[selection] = True
+                                if click_coords == (1, 0):
+                                    rook_coords = (0, 0)
+                                else:
+                                    rook_coords = (7, 0)
+                                rook_index = white_locations.index(rook_coords)
+                                white_locations[rook_index] = castling_moves[q][1]
+                                black_options = check_options(black_pieces, black_locations, 'black')
+                                white_options = check_options(white_pieces, white_locations, 'white')
+                                turn_step = 2
+                                selection = None
+                                valid_moves = []
+                if turn_step > 1:
+                    if forfeit_button_rect.collidepoint(mouse_x, mouse_y):
+                        winner = 'white'
+
                     if click_coords in black_locations:
                         selection = black_locations.index(click_coords)
+                        selected_piece = black_pieces[selection]
                         if turn_step == 2:
                             turn_step = 3
-                    elif click_coords in valid_moves and selection != 100:
+                    else:
+                        selection = None  # Deselect if click is not on a piece
+
+                    if click_coords in valid_moves and selection is not None:
+                        black_ep = check_ep(black_locations[selection], click_coords)
                         black_locations[selection] = click_coords
+                        black_moved[selection] = True
+
+                        # Handle capturing white pieces
                         if click_coords in white_locations:
                             white_piece = white_locations.index(click_coords)
                             captured_pieces_black.append(white_pieces[white_piece])
+                            if white_pieces[white_piece] == 'king':
+                                winner = 'black'
                             white_pieces.pop(white_piece)
                             white_locations.pop(white_piece)
+                            white_moved.pop(white_piece)
+                        
+                        # Handle en passant
+                        if white_ep is not None and click_coords == white_ep:
+                            white_piece = white_locations.index((white_ep[0], white_ep[1] + 1))
+                            captured_pieces_black.append(white_pieces[white_piece])
+                            white_pieces.pop(white_piece)
+                            white_locations.pop(white_piece)
+                            white_moved.pop(white_piece)
+                        
+                        # Reset selection BEFORE updating options
+                        selection = None
+                        valid_moves = []
+                        
                         # Update options
                         black_options = check_options(black_pieces, black_locations, 'black')
                         white_options = check_options(white_pieces, white_locations, 'white')
                         turn_step = 0
-                        selection = 100
-                        valid_moves = []
+                    # add option to castle
+                    elif selection is not None and selected_piece == 'king':
+                        for q in range(len(castling_moves)):
+                            if click_coords == castling_moves[q][0]:
+                                black_locations[selection] = click_coords
+                                black_moved[selection] = True
+                                if click_coords == (1, 7):
+                                    rook_coords = (0, 7)
+                                else:
+                                    rook_coords = (7, 7)
+                                rook_index = black_locations.index(rook_coords)
+                                black_locations[rook_index] = castling_moves[q][1]
+                                black_options = check_options(black_pieces, black_locations, 'black')
+                                white_options = check_options(white_pieces, white_locations, 'white')
+                                turn_step = 0
+                                selection = None
+                                valid_moves = []
+            else:
+                # Handle clicks outside the board (e.g., promotion selection)
+                check_promo_select()
+        if event.type == pygame.KEYDOWN and game_over:
+            if event.key == pygame.K_RETURN:
+                game_over = False
+                winner = ''
+                white_pieces = ['rook', 'knight', 'bishop', 'king', 'queen', 'bishop', 'knight', 'rook',
+                                'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
+                white_locations = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0),
+                                (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1)]
+                white_moved = [False, False, False, False, False, False, False, False,
+                            False, False, False, False, False, False, False, False]
+                black_pieces = ['rook', 'knight', 'bishop', 'king', 'queen', 'bishop', 'knight', 'rook',
+                                'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
+                black_locations = [(0, 7), (1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7),
+                                (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)]
+                black_moved = [False, False, False, False, False, False, False, False,
+                            False, False, False, False, False, False, False, False]
+                captured_pieces_white = []
+                captured_pieces_black = []
+                turn_step = 0
+                selection = None
+                valid_moves = []
+                black_options = check_options(black_pieces, black_locations, 'black')
+                white_options = check_options(white_pieces, white_locations, 'white')
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
                 hand.AddToHand(cards=deck_white.Draw(1))
+
+    if winner != '':
+        game_over = True
+        draw_game_over()
+
     mouse_pos = pygame.mouse.get_pos()
     
     # Nao tive ainda a visao pra fazer mas tem algo feito la so falta aumentar

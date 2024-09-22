@@ -19,14 +19,15 @@ def ler_imagem(caminho: str, tamanho: tuple[int, int]):
 
 # game variables and images
 
-# Define board position and size
-board_x = 300  # X-coordinate of the top-left corner of the board
-board_y = 250   # Y-coordinate of the top-left corner of the board
 square_size = 60  # Size of each square on the board (adjust as needed)
 
 # Calculate board dimensions based on square size
 board_width = square_size * 8
 board_height = square_size * 8
+
+# Define board position
+board_x = 300  # X-coordinate of the top-left corner of the board
+board_y = 250  # Y-coordinate of the top-left corner of the board
 
 # Load images of the pieces with adjusted sizes
 piece_scale_factor = square_size / 80  # Assuming original piece images were 80x80
@@ -56,6 +57,8 @@ black_locations = [(0, 7), (1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7
                    (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)]
 captured_pieces_white = []
 captured_pieces_black = []
+white_options = []
+black_options = []
 # 0 - whites turn no selection: 1-whites turn piece selected: 2- black turn no selection, 3 - black turn piece selected
 turn_step = 0
 selection = None
@@ -104,11 +107,11 @@ white_pawn_small =   pygame.transform.scale(white_pawn, (45, 45))
 
 white_images = {
     'pawn':   ler_imagem('xadrez/assets/images/white pawn.png',   (int(65 * piece_scale_factor), int(65 * piece_scale_factor))),
-    'queen':  ler_imagem('xadrez/assets/images/white queen.png',  (int(80 * piece_scale_factor), int(80 * piece_scale_factor))),
-    'king':   ler_imagem('xadrez/assets/images/white king.png',   (int(80 * piece_scale_factor), int(80 * piece_scale_factor))),
-    'rook':   ler_imagem('xadrez/assets/images/white rook.png',   (int(80 * piece_scale_factor), int(80 * piece_scale_factor))),
-    'bishop': ler_imagem('xadrez/assets/images/white bishop.png', (int(80 * piece_scale_factor), int(80 * piece_scale_factor))),
-    'knight': ler_imagem('xadrez/assets/images/white knight.png', (int(80 * piece_scale_factor), int(80 * piece_scale_factor)))
+    'queen':  ler_imagem('xadrez/assets/images/white queen.png',  (int(75 * piece_scale_factor), int(75 * piece_scale_factor))),
+    'king':   ler_imagem('xadrez/assets/images/white king.png',   (int(75 * piece_scale_factor), int(75 * piece_scale_factor))),
+    'rook':   ler_imagem('xadrez/assets/images/white rook.png',   (int(75 * piece_scale_factor), int(75 * piece_scale_factor))),
+    'bishop': ler_imagem('xadrez/assets/images/white bishop.png', (int(75 * piece_scale_factor), int(75 * piece_scale_factor))),
+    'knight': ler_imagem('xadrez/assets/images/white knight.png', (int(75 * piece_scale_factor), int(75 * piece_scale_factor)))
 }
 white_promotions = ['bishop', 'knight', 'rook', 'queen']
 white_moved = [False, False, False, False, False, False, False, False,
@@ -117,11 +120,11 @@ small_white_images = [white_pawn_small, white_queen_small, white_king_small, whi
                       white_rook_small, white_bishop_small]
 black_images = {
     'pawn':   ler_imagem('xadrez/assets/images/black pawn.png',   (int(65 * piece_scale_factor), int(65 * piece_scale_factor))),
-    'queen':  ler_imagem('xadrez/assets/images/black queen.png',  (int(80 * piece_scale_factor), int(80 * piece_scale_factor))),
-    'king':   ler_imagem('xadrez/assets/images/black king.png',   (int(80 * piece_scale_factor), int(80 * piece_scale_factor))),
-    'rook':   ler_imagem('xadrez/assets/images/black rook.png',   (int(80 * piece_scale_factor), int(80 * piece_scale_factor))),
-    'bishop': ler_imagem('xadrez/assets/images/black bishop.png', (int(80 * piece_scale_factor), int(80 * piece_scale_factor))),
-    'knight': ler_imagem('xadrez/assets/images/black knight.png', (int(80 * piece_scale_factor), int(80 * piece_scale_factor)))
+    'queen':  ler_imagem('xadrez/assets/images/black queen.png',  (int(75 * piece_scale_factor), int(75 * piece_scale_factor))),
+    'king':   ler_imagem('xadrez/assets/images/black king.png',   (int(75 * piece_scale_factor), int(75 * piece_scale_factor))),
+    'rook':   ler_imagem('xadrez/assets/images/black rook.png',   (int(75 * piece_scale_factor), int(75 * piece_scale_factor))),
+    'bishop': ler_imagem('xadrez/assets/images/black bishop.png', (int(75 * piece_scale_factor), int(75 * piece_scale_factor))),
+    'knight': ler_imagem('xadrez/assets/images/black knight.png', (int(75 * piece_scale_factor), int(75 * piece_scale_factor)))
 }
 small_black_images = [black_pawn_small, black_queen_small, black_king_small, black_knight_small,
                       black_rook_small, black_bishop_small]

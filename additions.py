@@ -65,7 +65,7 @@ def draw_pieces():
             pygame.draw.rect(c.screen, 'blue', piece_rect, 2)
 
 
-# function to c.check all pieces valid options on board
+# function to check all pieces valid options on board
 def check_options(pieces, locations, turn):
     global castling_moves
     moves_list = []
@@ -90,7 +90,7 @@ def check_options(pieces, locations, turn):
     return all_moves_list
 
 
-# c.check king valid moves
+# check king valid moves
 def check_king(position, color):
     moves_list = []
     castle_moves = check_castling()
@@ -100,7 +100,7 @@ def check_king(position, color):
     else:
         friends_list = c.black_locations
         enemies_list = c.white_locations
-    # 8 squares to c.check for kings, they can go one square any direction
+    # 8 squares to check for kings, they can go one square any direction
     targets = [(1, 0), (1, 1), (1, -1), (-1, 0), (-1, 1), (-1, -1), (0, 1), (0, -1)]
     for i in range(8):
         target = (position[0] + targets[i][0], position[1] + targets[i][1])
@@ -109,7 +109,7 @@ def check_king(position, color):
     return moves_list, castle_moves
 
 
-# c.check queen valid moves
+# check queen valid moves
 def check_queen(position, color):
     moves_list = check_bishop(position, color)
     second_list = check_rook(position, color)
@@ -118,7 +118,7 @@ def check_queen(position, color):
     return moves_list
 
 
-# c.check bishop moves
+# check bishop moves
 def check_bishop(position, color):
     moves_list = []
     if color == 'white':
@@ -154,7 +154,7 @@ def check_bishop(position, color):
     return moves_list
 
 
-# c.check rook moves
+# check rook moves
 def check_rook(position, color):
     moves_list = []
     if color == 'white':
@@ -190,14 +190,14 @@ def check_rook(position, color):
     return moves_list
 
 
-# c.check valid pawn moves
+# check valid pawn moves
 def check_pawn(position, color):
     moves_list = []
     if color == 'white':
         if (position[0], position[1] + 1) not in c.white_locations and \
                 (position[0], position[1] + 1) not in c.black_locations and position[1] < 7:
             moves_list.append((position[0], position[1] + 1))
-            # indent the c.check for two spaces ahead, so it is only checked if one space ahead is also open
+            # indent the check for two spaces ahead, so it is only checked if one space ahead is also open
             if (position[0], position[1] + 2) not in c.white_locations and \
                     (position[0], position[1] + 2) not in c.black_locations and position[1] == 1:
                 moves_list.append((position[0], position[1] + 2))
@@ -214,7 +214,7 @@ def check_pawn(position, color):
         if (position[0], position[1] - 1) not in c.white_locations and \
                 (position[0], position[1] - 1) not in c.black_locations and position[1] > 0:
             moves_list.append((position[0], position[1] - 1))
-            # indent the c.check for two spaces ahead, so it is only checked if one space ahead is also open
+            # indent the check for two spaces ahead, so it is only checked if one space ahead is also open
             if (position[0], position[1] - 2) not in c.white_locations and \
                     (position[0], position[1] - 2) not in c.black_locations and position[1] == 6:
                 moves_list.append((position[0], position[1] - 2))
@@ -246,7 +246,7 @@ def check_knight(position, color):
     return moves_list
 
 
-# c.check for valid moves for just selected piece
+# check for valid moves for just selected piece
 def check_valid_moves():
     if c.selection is not None:
         if c.turn_step < 2:
@@ -295,7 +295,7 @@ def draw_captured():
         c.screen.blit(c.small_white_images[index], position)
 
 
-# draw a flashing square around king if in c.check
+# draw a flashing square around king if in check
 def draw_check():
     if c.turn_step < 2:
         if 'king' in c.white_pieces:
@@ -344,7 +344,7 @@ def draw_game_over():
     c.screen.blit(text_surface2, text_rect2)
 
 
-# c.check en passant because people on the internet won't stop bugging me for it
+# check en passant because people on the internet won't stop bugging me for it
 def check_ep(old_coords, new_coords):
     if c.turn_step <= 1:
         index = c.white_locations.index(old_coords)
@@ -364,7 +364,7 @@ def check_ep(old_coords, new_coords):
 
 # add castling
 def check_castling():
-    # king must not currently be in c.check, neither the rook nor king has moved previously, nothing between
+    # king must not currently be in check, neither the rook nor king has moved previously, nothing between
     # and the king does not pass through or finish on an attacked piece
     castle_moves = []  # store each valid castle move as [((king_coords), (castle_coords))]
     rook_indexes = []
@@ -513,7 +513,7 @@ def check_promo_select():
                     black_promote = False
 
 
-# main game loop
+# main game loop (not used)
 if __name__ == "__main__":
     pygame.init()
     c.black_options = check_options(c.black_pieces, c.black_locations, 'black')

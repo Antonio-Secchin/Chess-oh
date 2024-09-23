@@ -59,6 +59,7 @@ font = pygame.font.Font('freesansbold.ttf', 44)
 smaller_font = pygame.font.Font('freesansbold.ttf', 36)
 turns = 0
 player_white = "white"
+player_black = "black"
 
 
 deck = list(range(1,21))
@@ -83,17 +84,25 @@ gan_duvi_img = c.ler_imagem('cards/ganancia_duvidosa.png', (x_scale,y_scale))
 
 sac_plan_img = c.ler_imagem('cards/sacrificio_planejado.png', (x_scale,y_scale))
 
+isso_meu_img = c.ler_imagem('cards/isso_e_meu.jpeg', (x_scale,y_scale))
+
 cardBackBlack = c.ler_imagem('cards/cardback_black.jpg',(x_scale,y_scale))
 cardBackWhite = c.ler_imagem('cards/cardback_white.jpg',(x_scale,y_scale))
 
 #Criando os templates das cartas
 
-sac_plan = classes.CardTemplate("Sacrifício Planejado", exp_duvi_img, "Sacrifique uma torre, pule o seu próximo turno. No seu turno seguinte você terá dois turnos para jogar.")
+
+sac_plan = classes.Sac_pla("Sacrifício Planejado", sac_plan_img, "Sacrifique uma torre, pule o seu próximo turno. No seu turno seguinte você terá dois turnos para jogar.")
+
+iss_meu = classes.Isso_meu("Isso é Meu", isso_meu_img, "Compre a carta do topo do deck do oponente")
 
 deck_white = classes.Deck(player_white,20)
 
+deck_black = classes.Deck(player_black,20)
+
 for _ in range(20):
     deck_white.AddToDeck(card = sac_plan)
+    deck_black.AddToDeck(card = iss_meu)
 
 # Adjust card positions based on new board dimensions (not used yet, but might be useful)
 # hand_start_x = board_x + board_width + 20  # Place the hand to the right of the board
@@ -304,6 +313,11 @@ while run:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
                 hand.AddToHand(cards=deck_white.Draw(1))
+                
+            if event.key == pygame.K_f:
+                if(iss_meu.effect_cost() == None):
+                    iss_meu.effect(deck_white, hand, deck_black)
+
 
     if c.winner != '':
         c.game_over = True

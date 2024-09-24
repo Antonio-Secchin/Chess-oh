@@ -1,13 +1,13 @@
 from classes.cards.card import CardTemplate
 
 class Gan_duv(CardTemplate):
-    def __init__(self, name, img, text):
-        super().__init__(name, img, text)
+    def __init__(self, name, img, text, x_scale, y_scale):
+        super().__init__(name, img, text, x_scale, y_scale)
         self.archtype = "duvidosa"
         self.cost_value = 2
 
-    def effect_cost(self):
+    def Effect_cost(self):
         return (self.cost_value,"Any")
     
-    def effect(self, Ally_deck = None, Ally_hand = None, Enemy_deck = None, Enemy_Hand = None):
-        Ally_hand.AddToHand(cards = Ally_deck.Draw(2))
+    def Effect(self, ally_Deck = None, ally_Hand = None, enemy_Deck = None, enemy_Hand = None):
+        ally_Hand.AddToHand(cards = ally_Deck.Draw(2))

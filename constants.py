@@ -46,6 +46,16 @@ forfeit_x = board_x + board_width + 20
 forfeit_y = board_y + board_height - forfeit_height
 forfeit_button_rect = pygame.Rect(forfeit_x, forfeit_y, forfeit_width, forfeit_height)
 
+#Points from pieces
+points = {
+    'pawn': 1,
+    'knight': 3,
+    'bishop': 3,
+    'rook': 5,
+    'queen': 9,
+    'king': 0
+}
+
 # Data structures for chess game
 white_pieces = ['rook', 'knight', 'bishop', 'king', 'queen', 'bishop', 'knight', 'rook',
                 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']

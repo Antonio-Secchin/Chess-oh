@@ -5,16 +5,6 @@ import classes
 from additions import *
 import constants as c
 
-# Definir os pontos das peças
-points = {
-    'pawn': 1,
-    'knight': 3,
-    'bishop': 3,
-    'rook': 5,
-    'queen': 9,
-    'king': 0
-}
-
 # Função para calcular a posição de uma peça no tabuleiro
 def calcular_posicao_tabuleiro(coluna, linha, board_x, board_y, square_width, square_height):
     pos_x = board_x + coluna * square_width
@@ -61,6 +51,12 @@ turns = 0
 player_white = "white"
 player_black = "black"
 
+# Tenho que ver algum jeito melhor pra isso, mas por enquanto vai aqui
+cost = None
+pay_cost_card = 0
+playing_card = False
+card_playing = None
+cost_type = None
 
 deck = list(range(1,21))
 hand = list()
@@ -74,13 +70,11 @@ x_scale = 150
 y_scale = 250
 # Carregar as imagens das cartas (suponha que você tenha as imagens)
 board = c.ler_imagem('xadrez/board.png',(700,700))
-# to pensando em usar isso pra colocar onde as pecas estariam e suas pontuaçoes
 boardSquaHeight = board.get_height()/8
 boardSquaWidth = board.get_width()/8
 exp_duvi_img = c.ler_imagem('cards/exploracao_duvidosa.png', (x_scale,y_scale))
 
 gan_duvi_img = c.ler_imagem('cards/ganancia_duvidosa.png', (x_scale,y_scale))
-#card1 = pygame.image.load('cards/exploracao_duvidosa.png')  # substitua pelo caminho correto
 
 sac_plan_img = c.ler_imagem('cards/sacrificio_planejado.png', (x_scale,y_scale))
 
@@ -91,29 +85,22 @@ cardBackWhite = c.ler_imagem('cards/cardback_white.jpg',(x_scale,y_scale))
 
 #Criando os templates das cartas
 
+sac_plan = classes.Sac_pla("Sacrifício Planejado", sac_plan_img, "Sacrifique uma torre, pule o seu próximo turno. No seu turno seguinte você terá dois turnos para jogar.", x_scale, y_scale)
 
-sac_plan = classes.Sac_pla("Sacrifício Planejado", sac_plan_img, "Sacrifique uma torre, pule o seu próximo turno. No seu turno seguinte você terá dois turnos para jogar.")
+iss_meu = classes.Isso_meu("Isso é Meu", isso_meu_img, "Compre a carta do topo do deck do oponente", x_scale, y_scale)
 
-iss_meu = classes.Isso_meu("Isso é Meu", isso_meu_img, "Compre a carta do topo do deck do oponente")
+gan_duvi = classes.Gan_duv("Ganância Duvidosa", gan_duvi_img, "Uma vez por turno, sacrifique dois ou mais pontos. Compre duas Cartas", x_scale, y_scale)
 
 deck_white = classes.Deck(player_white,20)
 
 deck_black = classes.Deck(player_black,20)
 
 for _ in range(20):
-    deck_white.AddToDeck(card = sac_plan)
+    deck_white.AddToDeck(card = gan_duvi)
     deck_black.AddToDeck(card = iss_meu)
-
-# Adjust card positions based on new board dimensions (not used yet, but might be useful)
-# hand_start_x = board_x + board_width + 20  # Place the hand to the right of the board
-# hand_start_y = height - y_scale - 20
 
 hand = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 
-#card_drawn = deck_white.Draw(1)
-
-# for card in card_drawn:
-#     print(card.name)
 
 # Definir as posições das cartas
 card1_pos = (100, height - y_scale)
@@ -143,8 +130,9 @@ while run:
         draw_valid(c.valid_moves)
     else:
         c.valid_moves = []
-
-    hand.DrawHand(screen=screen)
+    
+    mouse_pos = pygame.mouse.get_pos()
+    hand.DrawHand(screen=screen,mouse_pos=mouse_pos)
 
     # Draw the deck indicators (adjust positions if necessary)
     x = 0
@@ -161,11 +149,31 @@ while run:
                 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not c.game_over:
             mouse_x, mouse_y = event.pos
+            auxCard = hand.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
+            if(auxCard and card_playing == None):
+                print("Aqui")
+                playing_card = True
+                card_playing = auxCard
+                cost = auxCard.Effect_cost()
+                pay_cost_card = cost[0]
+                #types: Any, peca especifica, place
+                cost_type = cost[1]
+
             if c.board_x <= mouse_x < c.board_x + c.board_width and c.board_y <= mouse_y < c.board_y + c.board_height:
                 x_coord = int((mouse_x - c.board_x) // c.square_size)
                 y_coord = int((mouse_y - c.board_y) // c.square_size)
                 click_coords = (x_coord, y_coord)
                 if c.turn_step <= 1:
+
+                    if pay_cost_card != 0:
+                        if click_coords in c.white_locations:
+                            c.selection = c.white_locations.index(click_coords)
+                            selected_piece = c.white_pieces[c.selection]
+                            if cost_type == "Any" or cost_type == selected_piece:
+                                c.white_pieces.pop(c.selection)
+                                c.white_locations.pop(c.selection)
+                                c.white_moved.pop(c.selection)
+                                pay_cost_card = max(0,pay_cost_card -c.points[selected_piece])
 
                     if c.forfeit_button_rect.collidepoint(mouse_x, mouse_y):
                         c.winner = 'black'
@@ -315,9 +323,14 @@ while run:
                 hand.AddToHand(cards=deck_white.Draw(1))
                 
             if event.key == pygame.K_f:
-                if(iss_meu.effect_cost() == None):
-                    iss_meu.effect(deck_white, hand, deck_black)
+                iss_meu.Effect(ally_Deck = deck_white, ally_Hand = hand, enemy_Deck = deck_black)
 
+    if playing_card and pay_cost_card == 0:
+        card_playing.Effect(ally_Deck = deck_white, ally_Hand = hand, enemy_Deck = deck_black)
+        playing_card = False
+        card_playing = None
+        cost_type = None
+        cost = None
 
     if c.winner != '':
         c.game_over = True

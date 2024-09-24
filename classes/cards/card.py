@@ -1,11 +1,19 @@
 class CardTemplate(object):
-    def __init__(self, name, img, text):
+    def __init__(self, name, img, text, x_scale, y_scale):
         self.name = name
         self.img = img
         self.text = text
+        self.x_scale = x_scale
+        self.y_scale = y_scale
     
     def get_img(self):
         return self.img
+    
+    def get_height(self):
+        return self.y_scale
+    
+    def get_widht(self):
+        return self.x_scale
 
     def effect(self):
         pass

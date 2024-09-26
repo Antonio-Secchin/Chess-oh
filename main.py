@@ -80,6 +80,8 @@ sac_plan_img = c.ler_imagem('cards/sacrificio_planejado.png', (x_scale,y_scale))
 
 isso_meu_img = c.ler_imagem('cards/isso_e_meu.jpeg', (x_scale,y_scale))
 
+est_alt_img = c.ler_imagem('cards/Estrategia_alt.jpeg', (x_scale,y_scale))
+
 cardBackBlack = c.ler_imagem('cards/cardback_black.jpg',(x_scale,y_scale))
 cardBackWhite = c.ler_imagem('cards/cardback_white.jpg',(x_scale,y_scale))
 
@@ -91,13 +93,15 @@ iss_meu = classes.Isso_meu("Isso é Meu", isso_meu_img, "Compre a carta do topo 
 
 gan_duvi = classes.Gan_duv("Ganância Duvidosa", gan_duvi_img, "Uma vez por turno, sacrifique dois ou mais pontos. Compre duas Cartas", x_scale, y_scale)
 
+est_alt = classes.Est_alt("Estratégia Alternativa", est_alt_img, "Envie para o cemitério 3 cartas do deck do oponente", x_scale, y_scale)
+
 deck_white = classes.Deck(player_white,20)
 
 deck_black = classes.Deck(player_black,20)
 
 for _ in range(20):
     deck_white.AddToDeck(card = gan_duvi)
-    deck_black.AddToDeck(card = iss_meu)
+    deck_black.AddToDeck(card = est_alt)
 
 hand = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 
@@ -151,7 +155,7 @@ while run:
             mouse_x, mouse_y = event.pos
             auxCard = hand.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
             if(auxCard and card_playing == None):
-                print("Aqui")
+                #print("Aqui")
                 playing_card = True
                 card_playing = auxCard
                 cost = auxCard.Effect_cost()
@@ -327,6 +331,7 @@ while run:
 
     if playing_card and pay_cost_card == 0:
         card_playing.Effect(ally_Deck = deck_white, ally_Hand = hand, enemy_Deck = deck_black)
+        hand.RemoveFromHand(card_playing)
         playing_card = False
         card_playing = None
         cost_type = None

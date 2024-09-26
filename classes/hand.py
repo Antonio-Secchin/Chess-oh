@@ -11,6 +11,9 @@ class Hand(object):
             self.cards.append(card)  # Use append para adicionar um único card
         if cards:
             self.cards.extend(cards)
+    
+    def RemoveFromHand(self,card):
+        self.cards.remove(card)
 
 
     # def DrawHand(self, screen):
@@ -47,6 +50,7 @@ class Hand(object):
             else:
                 # Desenha a carta no tamanho normal
                 screen.blit(card.get_img(), (card_x, card_y))
+
         
     def Get_card_index_at_mouse(self, mouse_pos):
         """Retorna o índice da carta sob o mouse ou None se não houver carta."""

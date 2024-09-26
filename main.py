@@ -59,7 +59,11 @@ card_playing = None
 cost_type = None
 
 deck = list(range(1,21))
-hand = list()
+handWhite = list()
+whiteQtdPlay = 1
+blackQtdPlay = 1
+drawPhase = True
+firstTurn = True
 random.shuffle(deck)
 print(deck)
 print(deck.pop(0))
@@ -72,6 +76,8 @@ y_scale = 250
 board = c.ler_imagem('xadrez/board.png',(700,700))
 boardSquaHeight = board.get_height()/8
 boardSquaWidth = board.get_width()/8
+
+
 exp_duvi_img = c.ler_imagem('cards/exploracao_duvidosa.png', (x_scale,y_scale))
 
 gan_duvi_img = c.ler_imagem('cards/ganancia_duvidosa.png', (x_scale,y_scale))
@@ -81,6 +87,8 @@ sac_plan_img = c.ler_imagem('cards/sacrificio_planejado.png', (x_scale,y_scale))
 isso_meu_img = c.ler_imagem('cards/isso_e_meu.jpeg', (x_scale,y_scale))
 
 est_alt_img = c.ler_imagem('cards/Estrategia_alt.jpeg', (x_scale,y_scale))
+
+dir_iguais_img = c.ler_imagem('cards/direitos_iguais.png', (x_scale,y_scale))
 
 cardBackBlack = c.ler_imagem('cards/cardback_black.jpg',(x_scale,y_scale))
 cardBackWhite = c.ler_imagem('cards/cardback_white.jpg',(x_scale,y_scale))
@@ -95,15 +103,18 @@ gan_duvi = classes.Gan_duv("Ganância Duvidosa", gan_duvi_img, "Uma vez por turn
 
 est_alt = classes.Est_alt("Estratégia Alternativa", est_alt_img, "Envie para o cemitério 3 cartas do deck do oponente", x_scale, y_scale)
 
+dir_iguais = classes.Est_alt("Estratégia Alternativa", est_alt_img, "Envie para o cemitério 3 cartas do deck do oponente", x_scale, y_scale)
+
 deck_white = classes.Deck(player_white,20)
 
 deck_black = classes.Deck(player_black,20)
 
 for _ in range(20):
-    deck_white.AddToDeck(card = gan_duvi)
+    deck_white.AddToDeck(card = sac_plan)
     deck_black.AddToDeck(card = est_alt)
 
-hand = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
+handWhite = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
+handBlack = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 
 
 # Definir as posições das cartas
@@ -128,6 +139,17 @@ while run:
     draw_captured()
     draw_check()
 
+    last_turn_step = c.turn_step
+    if drawPhase:
+        if last_turn_step < 2:
+            if not firstTurn:
+                handWhite.AddToHand(cards = deck_white.Draw(1))
+            firstTurn = False
+        else:
+            handBlack.AddToHand(cards = deck_white.Draw(1))
+            #c.turn_step = 0
+        drawPhase = False
+
     # Desenha os movimentos da peça
     if c.selection is not None:
         c.valid_moves = check_valid_moves()
@@ -136,7 +158,7 @@ while run:
         c.valid_moves = []
     
     mouse_pos = pygame.mouse.get_pos()
-    hand.DrawHand(screen=screen,mouse_pos=mouse_pos)
+    handWhite.DrawHand(screen=screen,mouse_pos=mouse_pos)
 
     # Draw the deck indicators (adjust positions if necessary)
     x = 0
@@ -145,7 +167,7 @@ while run:
         screen.blit(cardBackBlack, (width - x_scale - 25 + x, height - y_scale - x))
         x += 5
 
-    # event handling, if quit pressed, then exit game
+    # event handWhiteling, if quit pressed, then exit game
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -153,16 +175,15 @@ while run:
                 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not c.game_over:
             mouse_x, mouse_y = event.pos
-            auxCard = hand.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
+            auxCard = handWhite.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
             if(auxCard and card_playing == None):
-                #print("Aqui")
                 playing_card = True
                 card_playing = auxCard
                 cost = auxCard.Effect_cost()
                 pay_cost_card = cost[0]
                 #types: Any, peca especifica, place
                 cost_type = cost[1]
-
+        
             if c.board_x <= mouse_x < c.board_x + c.board_width and c.board_y <= mouse_y < c.board_y + c.board_height:
                 x_coord = int((mouse_x - c.board_x) // c.square_size)
                 y_coord = int((mouse_y - c.board_y) // c.square_size)
@@ -178,6 +199,7 @@ while run:
                                 c.white_locations.pop(c.selection)
                                 c.white_moved.pop(c.selection)
                                 pay_cost_card = max(0,pay_cost_card -c.points[selected_piece])
+                                c.selection = None
 
                     if c.forfeit_button_rect.collidepoint(mouse_x, mouse_y):
                         c.winner = 'black'
@@ -218,7 +240,11 @@ while run:
                         # Update options
                         c.black_options = check_options(c.black_pieces, c.black_locations, 'black')
                         c.white_options = check_options(c.white_pieces, c.white_locations, 'white')
-                        c.turn_step = 2
+                        if whiteQtdPlay == 1:
+                                    c.turn_step = 2
+                                    whiteQtdPlay = 1
+                        else:
+                            whiteQtdPlay-=1
                     # add option to castle
                     elif c.selection is not None and selected_piece == 'king':
                         for q in range(len(castling_moves)):
@@ -233,7 +259,11 @@ while run:
                                 c.white_locations[rook_index] = castling_moves[q][1]
                                 c.black_options = check_options(c.black_pieces, c.black_locations, 'black')
                                 c.white_options = check_options(c.white_pieces, c.white_locations, 'white')
-                                c.turn_step = 2
+                                if whiteQtdPlay == 0:
+                                    c.turn_step = 2
+                                    whiteQtdPlay = 1
+                                else:
+                                    whiteQtdPlay-=1
                                 c.selection = None
                                 c.valid_moves = []
                 if c.turn_step > 1:
@@ -324,18 +354,35 @@ while run:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
-                hand.AddToHand(cards=deck_white.Draw(1))
+                handWhite.AddToHand(cards=deck_white.Draw(1))
                 
             if event.key == pygame.K_f:
-                iss_meu.Effect(ally_Deck = deck_white, ally_Hand = hand, enemy_Deck = deck_black)
+                iss_meu.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
 
     if playing_card and pay_cost_card == 0:
-        card_playing.Effect(ally_Deck = deck_white, ally_Hand = hand, enemy_Deck = deck_black)
-        hand.RemoveFromHand(card_playing)
+        cardEffect = card_playing.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
+        turn_step_aux = c.turn_step
+        if cardEffect:
+            for effect,qtd in cardEffect:
+                if effect == "Skip" and qtd == 1:
+                    if turn_step_aux < 2:
+                        c.turn_step = 2
+                    else:
+                        c.turn_step = 0
+                if effect == "QtdPlay":
+                    if turn_step_aux < 2:
+                        whiteQtdPlay = 2
+                    else:
+                        blackQtdPlay = 2
+        handWhite.RemoveFromHand(card_playing)
         playing_card = False
         card_playing = None
         cost_type = None
         cost = None
+        cardEffect = None
+
+    if last_turn_step != c.turn_step and (c.turn_step == 0 or c.turn_step == 2):
+        drawPhase = True
 
     if c.winner != '':
         c.game_over = True
@@ -346,6 +393,6 @@ while run:
     mouse_pos = pygame.mouse.get_pos()
     
     # Nao tive ainda a visao pra fazer mas tem algo feito la so falta aumentar
-    #hand.is_mouse_on_card(mouse_pos)
+    #handWhite.is_mouse_on_card(mouse_pos)
 
 pygame.quit

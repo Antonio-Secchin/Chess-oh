@@ -16,6 +16,9 @@ class Hand(object):
         self.cards.remove(card)
 
 
+    def Contains(self,card):
+        return self.cards.__contains__(card)
+
     # def DrawHand(self, screen):
     #     if len(self.cards) == 0:
     #         return

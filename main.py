@@ -58,16 +58,10 @@ playing_card = False
 card_playing = None
 cost_type = None
 
-deck = list(range(1,21))
-handWhite = list()
 whiteQtdPlay = 1
 blackQtdPlay = 1
 drawPhase = True
 firstTurn = True
-random.shuffle(deck)
-print(deck)
-print(deck.pop(0))
-print(deck)
 
 #Carregando as imagens
 x_scale = 150
@@ -103,7 +97,7 @@ gan_duvi = classes.Gan_duv("Ganância Duvidosa", gan_duvi_img, "Uma vez por turn
 
 est_alt = classes.Est_alt("Estratégia Alternativa", est_alt_img, "Envie para o cemitério 3 cartas do deck do oponente", x_scale, y_scale)
 
-dir_iguais = classes.Est_alt("Estratégia Alternativa", est_alt_img, "Envie para o cemitério 3 cartas do deck do oponente", x_scale, y_scale)
+dir_iguais = classes.Dir_iguais("Direitos Iguais", dir_iguais_img, "Se for o primeiro turno do jogo e você estiver jogando com as peças pretas. Ative essa carta da sua mão. Pule o turno do oponente", x_scale, y_scale)
 
 deck_white = classes.Deck(player_white,20)
 
@@ -116,6 +110,7 @@ for _ in range(20):
 handWhite = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 handBlack = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 
+#handBlack.AddToHand(card= dir_iguais)
 
 # Definir as posições das cartas
 card1_pos = (100, height - y_scale)
@@ -139,6 +134,10 @@ while run:
     draw_captured()
     draw_check()
 
+    if handBlack.Contains(dir_iguais) and firstTurn:
+        c.turn_step = 2
+        firstTurn = False
+        handBlack.RemoveFromHand(dir_iguais)
     last_turn_step = c.turn_step
     if drawPhase:
         if last_turn_step < 2:

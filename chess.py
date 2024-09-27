@@ -4,9 +4,9 @@ import pygame
 WIDTH = 1000
 HEIGHT = 900
 BOARD_SIZE = 8
-SQUARE_SIZE = 80
-BOARD_X = 100
-BOARD_Y = 100
+SQUARE_SIZE = 60
+BOARD_X = 350
+BOARD_Y = 250
 WHITE = 'white'
 BLACK = 'black'
 
@@ -327,4 +327,3 @@ def main():
 
     pygame.quit()
 
-main()

@@ -163,6 +163,9 @@ class Board:
         self.grid[row][col] = piece
         if piece:
             piece.position = position
+            
+    def remove_piece(self, piece):
+        self.set_piece_at(piece.position, None)
 
     def is_empty(self, position):
         return self.get_piece_at(position) is None
@@ -269,6 +272,7 @@ class Game:
                 if piece and piece.color == self.current_turn:
                     self.selected_piece = piece
                     self.valid_moves = piece.get_valid_moves(self.board)
+        return self.selected_piece
 
     def _find_kings(self):
         return [piece for row in self.board.grid for piece in row if isinstance(piece, King)]

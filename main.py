@@ -3,6 +3,9 @@ import pygame
 import classes
 from chess import Game as ChessGame, BOARD_X, BOARD_Y, SQUARE_SIZE, BOARD_SIZE, WHITE, BLACK
 
+WHITE = 'white'
+BLACK = 'black'
+
 def ler_imagem(caminho: str, tamanho: tuple[int, int]):
     image = pygame.image.load(caminho)
     image = pygame.transform.scale(image, tamanho)
@@ -83,7 +86,7 @@ gan_duvi_img = ler_imagem('cards/ganancia_duvidosa.png', (x_scale,y_scale))
 
 sac_plan_img = ler_imagem('cards/sacrificio_planejado.png', (x_scale,y_scale))
 
-isso_meu_img = ler_imagem('cards/isso_e_meu.jpeg', (x_scale,y_scale))
+isso_meu_img = ler_imagem('cards/Isso_e_meu.jpeg', (x_scale,y_scale))
 
 est_alt_img = ler_imagem('cards/Estrategia_alt.jpeg', (x_scale,y_scale))
 
@@ -110,7 +113,7 @@ deck_black = classes.Deck(player_black,20)
 
 for _ in range(20):
     deck_white.AddToDeck(card = sac_plan)
-    deck_black.AddToDeck(card = est_alt)
+    deck_black.AddToDeck(card = dir_iguais)
 
 handWhite = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 handBlack = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
@@ -135,12 +138,13 @@ while run:
     chess_game.draw(screen)
 
     if handBlack.Contains(dir_iguais) and firstTurn:
-        turn_step = 2
+        #turn_step = 2
+        chess_game.end_turn()
         firstTurn = False
         handBlack.RemoveFromHand(dir_iguais)
-    last_turn_step = turn_step
+    start_turn = chess_game.current_turn
     if drawPhase:
-        if last_turn_step < 2:
+        if start_turn == WHITE:
             if not firstTurn:
                 handWhite.AddToHand(cards = deck_white.Draw(1))
             firstTurn = False
@@ -167,19 +171,19 @@ while run:
                 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not chess_game.game_over:
             mouse_x, mouse_y = event.pos
-
-            # Handle chess moves
-            if BOARD_X <= mouse_x < BOARD_X + BOARD_SIZE * SQUARE_SIZE and BOARD_Y <= mouse_y < BOARD_Y + BOARD_SIZE * SQUARE_SIZE:
-                chess_game.handle_click((mouse_x, mouse_y))
             
             auxCard = handWhite.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
-            if(auxCard and card_playing == None):
+            if(auxCard and card_playing == None and auxCard != dir_iguais):
                 playing_card = True
                 card_playing = auxCard
                 cost = auxCard.Effect_cost()
                 pay_cost_card = cost[0]
                 #types: Any, peca especifica, place
                 cost_type = cost[1]
+
+            # Handle chess moves
+            if BOARD_X <= mouse_x < BOARD_X + BOARD_SIZE * SQUARE_SIZE and BOARD_Y <= mouse_y < BOARD_Y + BOARD_SIZE * SQUARE_SIZE:
+                chess_game.handle_click((mouse_x, mouse_y))
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
@@ -190,19 +194,16 @@ while run:
 
     if playing_card and pay_cost_card == 0:
         cardEffect = card_playing.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
-        turn_step_aux = turn_step
+        aux_turn = chess_game.current_turn
         if cardEffect:
             for effect,qtd in cardEffect:
                 if effect == "Skip" and qtd == 1:
-                    if turn_step_aux < 2:
-                        turn_step = 2
-                    else:
-                        turn_step = 0
+                    chess_game.end_turn()
                 if effect == "QtdPlay":
-                    if turn_step_aux < 2:
-                        whiteQtdPlay = 2
+                    if aux_turn == WHITE:
+                        whiteQtdPlay = qtd
                     else:
-                        blackQtdPlay = 2
+                        blackQtdPlay = qtd
         handWhite.RemoveFromHand(card_playing)
         playing_card = False
         card_playing = None
@@ -210,7 +211,7 @@ while run:
         cost = None
         cardEffect = None
 
-    if last_turn_step != turn_step and (turn_step == 0 or turn_step == 2):
+    if start_turn != chess_game.current_turn:
         drawPhase = True
 
     pygame.display.flip()

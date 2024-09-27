@@ -118,21 +118,7 @@ class Bishop(Piece):
 
 class Queen(Piece):
     def get_valid_moves(self, board):
-        moves = []
-        directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
-        for dx, dy in directions:
-            for i in range(1, 8):
-                new_pos = (self.position[0] + i*dx, self.position[1] + i*dy)
-                if not board.is_valid_position(new_pos):
-                    break
-                if board.is_empty(new_pos):
-                    moves.append(new_pos)
-                elif board.is_enemy_piece(new_pos, self.color):
-                    moves.append(new_pos)
-                    break
-                else:
-                    break
-        return moves
+        return Rook.get_valid_moves(self, board) + Bishop.get_valid_moves(self, board)
 
 class King(Piece):
     def get_valid_moves(self, board):
@@ -161,6 +147,13 @@ class Board:
             self.grid[0][col] = piece_class(BLACK, (col, 0))
             self.grid[7][col] = piece_class(WHITE, (col, 7))
 
+    def new_piece(self, piece, capturable=False):
+        position = piece.position
+        if (self.get_piece_at(position) is not None and not capturable):
+            return False
+        self.set_piece_at(position, piece)
+        return True
+        
     def get_piece_at(self, position):
         col, row = position
         return self.grid[row][col]

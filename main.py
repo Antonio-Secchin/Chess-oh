@@ -183,7 +183,12 @@ while run:
 
             # Handle chess moves
             if BOARD_X <= mouse_x < BOARD_X + BOARD_SIZE * SQUARE_SIZE and BOARD_Y <= mouse_y < BOARD_Y + BOARD_SIZE * SQUARE_SIZE:
-                chess_game.handle_click((mouse_x, mouse_y))
+                selected_piece = chess_game.handle_click((mouse_x, mouse_y))
+
+                if pay_cost_card != 0:
+                    pay_cost_card = max(0,pay_cost_card - selected_piece.points)
+                    chess_game.remove_piece(selected_piece)
+
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:

@@ -26,6 +26,8 @@ for color in [WHITE, BLACK]:
         piece_images[key] = pygame.transform.scale(piece_images[key], (SQUARE_SIZE, SQUARE_SIZE))
 
 class Piece:
+    points = 0
+
     def __init__(self, color, position):
         self.color = color
         self.position = position
@@ -48,6 +50,8 @@ class Piece:
         screen.blit(image, (pos_x, pos_y))
 
 class Pawn(Piece):
+    points = 1
+
     def get_valid_moves(self, board):
         moves = []
         col, row = self.position
@@ -68,6 +72,8 @@ class Pawn(Piece):
         return moves
 
 class Rook(Piece):
+    points = 5
+
     def get_valid_moves(self, board):
         moves = []
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -86,6 +92,8 @@ class Rook(Piece):
         return moves
 
 class Knight(Piece):
+    points = 3
+
     def get_valid_moves(self, board):
         moves = []
         col, row = self.position
@@ -99,6 +107,8 @@ class Knight(Piece):
         return moves
 
 class Bishop(Piece):
+    points = 3
+
     def get_valid_moves(self, board):
         moves = []
         directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -117,10 +127,15 @@ class Bishop(Piece):
         return moves
 
 class Queen(Piece):
+    points = 9
+
     def get_valid_moves(self, board):
         return Rook.get_valid_moves(self, board) + Bishop.get_valid_moves(self, board)
 
 class King(Piece):
+    # Bom.. nunca se sabe.
+    points = 20
+
     def get_valid_moves(self, board):
         moves = []
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -163,9 +178,6 @@ class Board:
         self.grid[row][col] = piece
         if piece:
             piece.position = position
-            
-    def remove_piece(self, piece):
-        self.set_piece_at(piece.position, None)
 
     def is_empty(self, position):
         return self.get_piece_at(position) is None
@@ -252,6 +264,11 @@ class Game:
         self.game_over = False
         self.winner = None
         self.captured_pieces = {WHITE: [], BLACK: []}
+
+    def remove_piece(self, piece):
+        if self.selected_piece is piece:
+            self.selected_piece = None
+        self.board.set_piece_at(piece.position, None)
 
     def handle_click(self, pos):
         col = (pos[0] - BOARD_X) // SQUARE_SIZE

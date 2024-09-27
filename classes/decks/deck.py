@@ -22,9 +22,9 @@ class Deck(object):
         return aux
     
     def SendToGrave(self, qtd):
-        self.actual_size -= qtd
         for _ in range(qtd):
             if self.actual_size == 0:
                 return None
             self.gy.append(self.cards.pop())  # Adiciona a carta como um item na tupla
+            self.actual_size -= 1
         

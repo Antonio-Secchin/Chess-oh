@@ -51,6 +51,7 @@ class Piece:
 
 class Pawn(Piece):
     points = 1
+    piece_type = 'pawn'
 
     def get_valid_moves(self, board):
         moves = []
@@ -73,6 +74,7 @@ class Pawn(Piece):
 
 class Rook(Piece):
     points = 5
+    piece_type = 'rook'
 
     def get_valid_moves(self, board):
         moves = []
@@ -93,6 +95,7 @@ class Rook(Piece):
 
 class Knight(Piece):
     points = 3
+    piece_type = 'knight'
 
     def get_valid_moves(self, board):
         moves = []
@@ -108,6 +111,7 @@ class Knight(Piece):
 
 class Bishop(Piece):
     points = 3
+    piece_type = 'bishop'
 
     def get_valid_moves(self, board):
         moves = []
@@ -128,13 +132,16 @@ class Bishop(Piece):
 
 class Queen(Piece):
     points = 9
+    piece_type = 'queen'
 
     def get_valid_moves(self, board):
         return Rook.get_valid_moves(self, board) + Bishop.get_valid_moves(self, board)
 
 class King(Piece):
     # Bom.. nunca se sabe.
+    #kkkkkkkkkk
     points = 20
+    piece_type = 'king'
 
     def get_valid_moves(self, board):
         moves = []
@@ -259,11 +266,19 @@ class Game:
     def __init__(self):
         self.board = Board()
         self.current_turn = WHITE
+        self.white_qtd_plays = 1
+        self.black_qtd_plays = 1
         self.selected_piece = None
         self.valid_moves = []
         self.game_over = False
         self.winner = None
         self.captured_pieces = {WHITE: [], BLACK: []}
+        
+    def set_qtd_plays_white(self, qtd):
+        self.white_qtd_plays = qtd
+    
+    def set_qtd_plays_black(self, qtd):
+        self.black_qtd_plays = qtd
 
     def remove_piece(self, piece):
         if self.selected_piece is piece:
@@ -281,7 +296,17 @@ class Game:
                     captured_piece = self.board.move_piece(self.selected_piece.position, clicked_pos)
                     if captured_piece:
                         self.captured_pieces[self.current_turn].append(captured_piece)
-                    self.end_turn()
+                    
+                    if self.current_turn == WHITE:
+                        if self.white_qtd_plays == 1:
+                            self.end_turn()
+                        else:
+                            self.white_qtd_plays -=1
+                    else:
+                        if self.black_qtd_plays == 1:
+                            self.end_turn()
+                        else:
+                            self.black_qtd_plays -=1
                 self.selected_piece = None
                 self.valid_moves = []
             else:

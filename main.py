@@ -112,8 +112,8 @@ deck_white = classes.Deck(player_white,20)
 deck_black = classes.Deck(player_black,20)
 
 for _ in range(20):
-    deck_white.AddToDeck(card = sac_plan)
-    deck_black.AddToDeck(card = dir_iguais)
+    deck_white.AddToDeck(card = est_alt)
+    deck_black.AddToDeck(card = iss_meu)
 
 handWhite = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 handBlack = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
@@ -185,7 +185,8 @@ while run:
             if BOARD_X <= mouse_x < BOARD_X + BOARD_SIZE * SQUARE_SIZE and BOARD_Y <= mouse_y < BOARD_Y + BOARD_SIZE * SQUARE_SIZE:
                 selected_piece = chess_game.handle_click((mouse_x, mouse_y))
 
-                if pay_cost_card != 0:
+                if selected_piece and pay_cost_card != 0 and (cost_type == "Any" 
+                                           or selected_piece.piece_type == cost_type):
                     pay_cost_card = max(0,pay_cost_card - selected_piece.points)
                     chess_game.remove_piece(selected_piece)
 
@@ -206,9 +207,9 @@ while run:
                     chess_game.end_turn()
                 if effect == "QtdPlay":
                     if aux_turn == WHITE:
-                        whiteQtdPlay = qtd
+                        chess_game.set_qtd_plays_white(qtd)
                     else:
-                        blackQtdPlay = qtd
+                        chess_game.set_qtd_plays_black(qtd)
         handWhite.RemoveFromHand(card_playing)
         playing_card = False
         card_playing = None

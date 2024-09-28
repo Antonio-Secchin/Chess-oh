@@ -309,12 +309,44 @@ class Game:
                             self.black_qtd_plays -=1
                 self.selected_piece = None
                 self.valid_moves = []
+                return self.selected_piece
             else:
                 piece = self.board.get_piece_at(clicked_pos)
                 if piece and piece.color == self.current_turn:
                     self.selected_piece = piece
                     self.valid_moves = piece.get_valid_moves(self.board)
         return self.selected_piece
+    
+    def handle_click_aux(self, pos):
+        col = (pos[0] - BOARD_X) // SQUARE_SIZE
+        row = (pos[1] - BOARD_Y) // SQUARE_SIZE
+        clicked_pos = (col, row)
+
+        if self.board.is_valid_position(clicked_pos):
+            if self.selected_piece:
+                if clicked_pos in self.valid_moves:
+                    captured_piece = self.board.move_piece(self.selected_piece.position, clicked_pos)
+                    if captured_piece:
+                        self.captured_pieces[self.current_turn].append(captured_piece)
+                    
+                    if self.current_turn == WHITE:
+                        if self.white_qtd_plays == 1:
+                            self.end_turn()
+                        else:
+                            self.white_qtd_plays -=1
+                    else:
+                        if self.black_qtd_plays == 1:
+                            self.end_turn()
+                        else:
+                            self.black_qtd_plays -=1
+                self.selected_piece = None
+                self.valid_moves = []
+                return (self.selected_piece,clicked_pos)
+            else:
+                piece = self.board.get_piece_at(clicked_pos)
+                if piece and piece.color == self.current_turn:
+                    self.selected_piece = piece
+                    self.valid_moves = piece.get_valid_moves(self.board)
 
     def _find_kings(self):
         return [piece for row in self.board.grid for piece in row if isinstance(piece, King)]

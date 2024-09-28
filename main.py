@@ -1,15 +1,15 @@
 import random
 import pygame
 import classes
-from chess import Game as ChessGame, BOARD_X, BOARD_Y, SQUARE_SIZE, BOARD_SIZE, WHITE, BLACK
+from chess import Game as ChessGame, Pawn, BOARD_X, BOARD_Y, SQUARE_SIZE, BOARD_SIZE, WHITE, BLACK
 
 WHITE = 'white'
 BLACK = 'black'
 
 def ler_imagem(caminho: str, tamanho: tuple[int, int]):
     image = pygame.image.load(caminho)
-    image = pygame.transform.scale(image, tamanho)
     image = image.convert_alpha()
+    image = pygame.transform.smoothscale(image, tamanho)
     return image
 
 # Função para calcular a posição de uma peça no tabuleiro
@@ -65,6 +65,10 @@ pay_cost_card = 0
 playing_card = False
 card_playing = None
 cost_type = None
+placing_piece = False
+place = None
+place_piece_type = None
+place_team = None
 
 whiteQtdPlay = 1
 blackQtdPlay = 1
@@ -92,6 +96,8 @@ est_alt_img = ler_imagem('cards/Estrategia_alt.jpeg', (x_scale,y_scale))
 
 dir_iguais_img = ler_imagem('cards/direitos_iguais.png', (x_scale,y_scale))
 
+troca_justa_img = ler_imagem('cards/troca_justa.png',(x_scale, y_scale))
+
 cardBackBlack = ler_imagem('cards/cardback_black.jpg',(x_scale,y_scale))
 cardBackWhite = ler_imagem('cards/cardback_white.jpg',(x_scale,y_scale))
 
@@ -107,12 +113,14 @@ est_alt = classes.Est_alt("Estratégia Alternativa", est_alt_img, "Envie para o 
 
 dir_iguais = classes.Dir_iguais("Direitos Iguais", dir_iguais_img, "Se for o primeiro turno do jogo e você estiver jogando com as peças pretas. Ative essa carta da sua mão. Pule o turno do oponente", x_scale, y_scale)
 
+troca_justa = classes.Troca_justa("Troca Justa", troca_justa_img, "Compre 1 carta. Adicione um peão inimigo em qualquer lugar do campo",x_scale,y_scale)
+
 deck_white = classes.Deck(player_white,20)
 
 deck_black = classes.Deck(player_black,20)
 
 for _ in range(20):
-    deck_white.AddToDeck(card = est_alt)
+    deck_white.AddToDeck(card = troca_justa)
     deck_black.AddToDeck(card = iss_meu)
 
 handWhite = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
@@ -180,11 +188,20 @@ while run:
                 pay_cost_card = cost[0]
                 #types: Any, peca especifica, place
                 cost_type = cost[1]
-
+            
             # Handle chess moves
             if BOARD_X <= mouse_x < BOARD_X + BOARD_SIZE * SQUARE_SIZE and BOARD_Y <= mouse_y < BOARD_Y + BOARD_SIZE * SQUARE_SIZE:
                 selected_piece = chess_game.handle_click((mouse_x, mouse_y))
-
+                
+                # if not selected_piece and placing_piece and place == "Any":
+                #     if place_piece_type == "pawn":
+                #         print("Heres")
+                #         chess_game.board.new_piece(Pawn(place_team,[5,5]),True)
+                #         placing_piece = False
+                #         place = None
+                #         place_piece_type = None
+                #         place_team = None
+                
                 if selected_piece and pay_cost_card != 0 and (cost_type == "Any" 
                                            or selected_piece.piece_type == cost_type):
                     pay_cost_card = max(0,pay_cost_card - selected_piece.points)
@@ -210,6 +227,17 @@ while run:
                         chess_game.set_qtd_plays_white(qtd)
                     else:
                         chess_game.set_qtd_plays_black(qtd)
+                if effect == "Place":
+                    placing_piece = True
+                    place = qtd
+                if effect == "Enemy":
+                    place_piece_type = qtd
+                    if chess_game.current_turn == WHITE:
+                        place_team = BLACK
+                    else:
+                        place_team = WHITE
+                        
+                    
         handWhite.RemoveFromHand(card_playing)
         playing_card = False
         card_playing = None

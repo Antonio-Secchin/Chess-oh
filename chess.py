@@ -241,6 +241,24 @@ class Board:
                         if not still_in_check:
                             return False
         return True
+    
+    def check_surroundings(self, center_position, my_team):
+        col, row = center_position
+        surroundings = []
+
+        # Verificar todos os quadrados ao redor (3x3)
+        for i in range(col - 1, col + 2):
+            for j in range(row - 1, row + 2):
+                # Ignorar o centro e posições fora do tabuleiro
+                if (i == col and j == row) or not self.is_valid_position((i, j)):
+                    continue
+                piece = self.get_piece_at((i, j))
+                # Verificar se a peça pertence ao time
+                if piece and piece.color == my_team:
+                    surroundings.append(piece)
+
+        # Verificar se todas as posições ao redor estão ocupadas por peças do meu time
+        return len(surroundings) >  0
 
     def draw(self, screen):
         for row in range(BOARD_SIZE):
@@ -250,6 +268,8 @@ class Board:
                 piece = self.get_piece_at((col, row))
                 if piece:
                     piece.draw(screen)
+                    
+    
 
 class Game:
     def __init__(self):
@@ -322,6 +342,9 @@ class Game:
             self.winner = WHITE if kings[0].color == WHITE else BLACK            
         elif self.board.is_check(self.current_turn):
             print(f"{self.current_turn} is in check!")
+            
+    def checkPlacement(self, center_position, team):
+        return self.board.check_surroundings(center_position, team)
 
     def draw(self, screen):
         self.board.draw(screen)

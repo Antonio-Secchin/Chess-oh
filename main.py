@@ -66,6 +66,7 @@ placing_piece = False
 place = None
 place_piece_type = None
 place_team = None
+place_qtd = 0
 
 whiteQtdPlay = 1
 blackQtdPlay = 1
@@ -84,6 +85,8 @@ boardSquaWidth = board.get_width()/8
 exp_duvi_img = ler_imagem('cards/exploracao_duvidosa.png', (x_scale,y_scale))
 
 gan_duvi_img = ler_imagem('cards/ganancia_duvidosa.png', (x_scale,y_scale))
+
+sac_duvi_img = ler_imagem('cards/sacrificio_duvidoso.png',(x_scale,y_scale))
 
 sac_plan_img = ler_imagem('cards/sacrificio_planejado.png', (x_scale,y_scale))
 
@@ -104,6 +107,8 @@ sac_plan = classes.Sac_pla("Sacrifício Planejado", sac_plan_img, "Sacrifique um
 
 iss_meu = classes.Isso_meu("Isso é Meu", isso_meu_img, "Compre a carta do topo do deck do oponente", x_scale, y_scale)
 
+sac_duvi = classes.Sac_duvi("Sacrifício Duvidoso", sac_duvi_img, "Sacrifique sua Rainha e posicione nove peões no tabuleiro. (Eles tem que estar conectado a uma peça aliada)", x_scale, y_scale)
+
 gan_duvi = classes.Gan_duv("Ganância Duvidosa", gan_duvi_img, "Uma vez por turno, sacrifique dois ou mais pontos. Compre duas Cartas", x_scale, y_scale)
 
 est_alt = classes.Est_alt("Estratégia Alternativa", est_alt_img, "Envie para o cemitério 3 cartas do deck do oponente", x_scale, y_scale)
@@ -117,7 +122,7 @@ deck_white = classes.Deck(player_white,20)
 deck_black = classes.Deck(player_black,20)
 
 for _ in range(20):
-    deck_white.AddToDeck(card = iss_meu)
+    deck_white.AddToDeck(card = sac_duvi)
     deck_black.AddToDeck(card = troca_justa)
 
 handWhite = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
@@ -188,13 +193,20 @@ while run:
             if BOARD_X <= mouse_x < BOARD_X + BOARD_SIZE * SQUARE_SIZE and BOARD_Y <= mouse_y < BOARD_Y + BOARD_SIZE * SQUARE_SIZE:
                 selected_piece, clicked_pos = chess_game.handle_click((mouse_x, mouse_y))
                 
-                if not selected_piece and placing_piece and place == "Any":
-                    if place_piece_type == "pawn":
-                        chess_game.new_piece("pawn", place_team, clicked_pos)
-                        placing_piece = False
-                        place = None
-                        place_piece_type = None
-                        place_team = None
+                if not selected_piece and placing_piece and place_qtd != 0:
+                    if place == "Any":
+                        chess_game.new_piece(place_piece_type, place_team, clicked_pos)
+                        place_qtd -= 1
+                    if place == "Near":
+                        if chess_game.checkPlacement(clicked_pos, place_team):
+                            chess_game.new_piece(place_piece_type, place_team, clicked_pos)
+                            place_qtd -=1
+                
+                elif place_qtd == 0:
+                    placing_piece = False
+                    place = None
+                    place_piece_type = None
+                    place_team = None
                 
                 if selected_piece and pay_cost_card != 0 and (cost_type == "Any" or str(selected_piece) == cost_type):
                     pay_cost_card = max(0,pay_cost_card - selected_piece.points)
@@ -226,6 +238,14 @@ while run:
                         place_team = BLACK
                     else:
                         place_team = WHITE
+                if effect == "Ally":
+                    place_piece_type = qtd
+                    if chess_game.current_turn == WHITE:
+                        place_team = WHITE
+                    else:
+                        place_team = BLACK
+                if effect == "Qtd":
+                    place_qtd = qtd
                         
                     
         handWhite.RemoveFromHand(card_playing)

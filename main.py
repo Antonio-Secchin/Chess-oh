@@ -117,8 +117,8 @@ deck_white = classes.Deck(player_white,20)
 deck_black = classes.Deck(player_black,20)
 
 for _ in range(20):
-    deck_white.AddToDeck(card = troca_justa)
-    deck_black.AddToDeck(card = iss_meu)
+    deck_white.AddToDeck(card = iss_meu)
+    deck_black.AddToDeck(card = troca_justa)
 
 handWhite = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 handBlack = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
@@ -208,7 +208,7 @@ while run:
             if event.key == pygame.K_f:
                 iss_meu.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
 
-    if playing_card and pay_cost_card == 0:
+    if playing_card and pay_cost_card == 0 and not placing_piece:
         cardEffect = card_playing.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
         aux_turn = chess_game.current_turn
         if cardEffect:

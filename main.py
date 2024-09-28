@@ -3,9 +3,6 @@ import pygame
 import classes
 from chess import Game as ChessGame, Pawn, BOARD_X, BOARD_Y, SQUARE_SIZE, BOARD_SIZE, WHITE, BLACK
 
-WHITE = 'white'
-BLACK = 'black'
-
 def ler_imagem(caminho: str, tamanho: tuple[int, int]):
     image = pygame.image.load(caminho)
     image = image.convert_alpha()
@@ -146,7 +143,6 @@ while run:
     chess_game.draw(screen)
 
     if handBlack.Contains(dir_iguais) and firstTurn:
-        #turn_step = 2
         chess_game.end_turn()
         firstTurn = False
         handBlack.RemoveFromHand(dir_iguais)
@@ -158,7 +154,6 @@ while run:
             firstTurn = False
         else:
             handBlack.AddToHand(cards = deck_white.Draw(1))
-            #turn_step = 0
         drawPhase = False
   
     mouse_pos = pygame.mouse.get_pos()
@@ -191,19 +186,17 @@ while run:
             
             # Handle chess moves
             if BOARD_X <= mouse_x < BOARD_X + BOARD_SIZE * SQUARE_SIZE and BOARD_Y <= mouse_y < BOARD_Y + BOARD_SIZE * SQUARE_SIZE:
-                selected_piece = chess_game.handle_click((mouse_x, mouse_y))
+                selected_piece, clicked_pos = chess_game.handle_click((mouse_x, mouse_y))
                 
-                # if not selected_piece and placing_piece and place == "Any":
-                #     if place_piece_type == "pawn":
-                #         print("Heres")
-                #         chess_game.board.new_piece(Pawn(place_team,[5,5]),True)
-                #         placing_piece = False
-                #         place = None
-                #         place_piece_type = None
-                #         place_team = None
+                if not selected_piece and placing_piece and place == "Any":
+                    if place_piece_type == "pawn":
+                        chess_game.new_piece("pawn", place_team, clicked_pos)
+                        placing_piece = False
+                        place = None
+                        place_piece_type = None
+                        place_team = None
                 
-                if selected_piece and pay_cost_card != 0 and (cost_type == "Any" 
-                                           or selected_piece.piece_type == cost_type):
+                if selected_piece and pay_cost_card != 0 and (cost_type == "Any" or str(selected_piece) == cost_type):
                     pay_cost_card = max(0,pay_cost_card - selected_piece.points)
                     chess_game.remove_piece(selected_piece)
 
@@ -223,10 +216,7 @@ while run:
                 if effect == "Skip" and qtd == 1:
                     chess_game.end_turn()
                 if effect == "QtdPlay":
-                    if aux_turn == WHITE:
-                        chess_game.set_qtd_plays_white(qtd)
-                    else:
-                        chess_game.set_qtd_plays_black(qtd)
+                    chess_game.set_qtd_plays(qtd, aux_turn)
                 if effect == "Place":
                     placing_piece = True
                     place = qtd

@@ -21,7 +21,6 @@ piece_types = ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king']
 for color in [WHITE, BLACK]:
     for piece in piece_types:
         key = f"{color}_{piece}"
-        # Replace 'path/to/images/' with the actual path to your image files
         piece_images[key] = pygame.image.load(f"xadrez/assets/images/{key}.png")
         piece_images[key] = pygame.transform.scale(piece_images[key], (SQUARE_SIZE, SQUARE_SIZE))
 
@@ -32,6 +31,9 @@ class Piece:
         self.color = color
         self.position = position
         self.has_moved = False
+
+    def __str__(self):
+        return self.__class__.__name__.lower()
 
     def get_valid_moves(self, board):
         raise NotImplementedError
@@ -51,7 +53,6 @@ class Piece:
 
 class Pawn(Piece):
     points = 1
-    piece_type = 'pawn'
 
     def get_valid_moves(self, board):
         moves = []
@@ -74,7 +75,6 @@ class Pawn(Piece):
 
 class Rook(Piece):
     points = 5
-    piece_type = 'rook'
 
     def get_valid_moves(self, board):
         moves = []
@@ -95,7 +95,6 @@ class Rook(Piece):
 
 class Knight(Piece):
     points = 3
-    piece_type = 'knight'
 
     def get_valid_moves(self, board):
         moves = []
@@ -111,7 +110,6 @@ class Knight(Piece):
 
 class Bishop(Piece):
     points = 3
-    piece_type = 'bishop'
 
     def get_valid_moves(self, board):
         moves = []
@@ -132,7 +130,6 @@ class Bishop(Piece):
 
 class Queen(Piece):
     points = 9
-    piece_type = 'queen'
 
     def get_valid_moves(self, board):
         return Rook.get_valid_moves(self, board) + Bishop.get_valid_moves(self, board)
@@ -141,7 +138,6 @@ class King(Piece):
     # Bom.. nunca se sabe.
     #kkkkkkkkkk
     points = 20
-    piece_type = 'king'
 
     def get_valid_moves(self, board):
         moves = []
@@ -168,13 +164,6 @@ class Board:
         for col, piece_class in enumerate(piece_order):
             self.grid[0][col] = piece_class(BLACK, (col, 0))
             self.grid[7][col] = piece_class(WHITE, (col, 7))
-
-    def new_piece(self, piece, capturable=False):
-        position = piece.position
-        if (self.get_piece_at(position) is not None and not capturable):
-            return False
-        self.set_piece_at(position, piece)
-        return True
         
     def get_piece_at(self, position):
         col, row = position
@@ -266,24 +255,32 @@ class Game:
     def __init__(self):
         self.board = Board()
         self.current_turn = WHITE
-        self.white_qtd_plays = 1
-        self.black_qtd_plays = 1
+        self.qtd_plays = {WHITE: 1, BLACK: 1}
         self.selected_piece = None
         self.valid_moves = []
         self.game_over = False
         self.winner = None
         self.captured_pieces = {WHITE: [], BLACK: []}
         
-    def set_qtd_plays_white(self, qtd):
-        self.white_qtd_plays = qtd
-    
-    def set_qtd_plays_black(self, qtd):
-        self.black_qtd_plays = qtd
+    def set_qtd_plays(self, qtd, color):
+        self.qtd_plays[color] = qtd
+
+    def new_piece(self, piece_name, color, position, replace=False):
+        piece_class = globals()[piece_name.lower().capitalize()]
+        piece = piece_class(color, position)
+        board = self.board
+        if (board.get_piece_at(position) is not None and not replace):
+            return False
+        board.set_piece_at(position, piece)
+        return True
 
     def remove_piece(self, piece):
         if self.selected_piece is piece:
             self.selected_piece = None
         self.board.set_piece_at(piece.position, None)
+
+    def isWhitesTurn(self):
+        return self.current_turn == WHITE
 
     def handle_click(self, pos):
         col = (pos[0] - BOARD_X) // SQUARE_SIZE
@@ -297,56 +294,19 @@ class Game:
                     if captured_piece:
                         self.captured_pieces[self.current_turn].append(captured_piece)
                     
-                    if self.current_turn == WHITE:
-                        if self.white_qtd_plays == 1:
-                            self.end_turn()
-                        else:
-                            self.white_qtd_plays -=1
+                    if self.qtd_plays[self.current_turn] == 1:
+                        self.end_turn()
                     else:
-                        if self.black_qtd_plays == 1:
-                            self.end_turn()
-                        else:
-                            self.black_qtd_plays -=1
-                self.selected_piece = None
-                self.valid_moves = []
-                return self.selected_piece
-            else:
-                piece = self.board.get_piece_at(clicked_pos)
-                if piece and piece.color == self.current_turn:
-                    self.selected_piece = piece
-                    self.valid_moves = piece.get_valid_moves(self.board)
-        return self.selected_piece
-    
-    def handle_click_aux(self, pos):
-        col = (pos[0] - BOARD_X) // SQUARE_SIZE
-        row = (pos[1] - BOARD_Y) // SQUARE_SIZE
-        clicked_pos = (col, row)
-
-        if self.board.is_valid_position(clicked_pos):
-            if self.selected_piece:
-                if clicked_pos in self.valid_moves:
-                    captured_piece = self.board.move_piece(self.selected_piece.position, clicked_pos)
-                    if captured_piece:
-                        self.captured_pieces[self.current_turn].append(captured_piece)
+                        self.qtd_plays[self.current_turn] -=1
                     
-                    if self.current_turn == WHITE:
-                        if self.white_qtd_plays == 1:
-                            self.end_turn()
-                        else:
-                            self.white_qtd_plays -=1
-                    else:
-                        if self.black_qtd_plays == 1:
-                            self.end_turn()
-                        else:
-                            self.black_qtd_plays -=1
                 self.selected_piece = None
                 self.valid_moves = []
-                return (self.selected_piece,clicked_pos)
             else:
                 piece = self.board.get_piece_at(clicked_pos)
                 if piece and piece.color == self.current_turn:
                     self.selected_piece = piece
                     self.valid_moves = piece.get_valid_moves(self.board)
+        return self.selected_piece, clicked_pos
 
     def _find_kings(self):
         return [piece for row in self.board.grid for piece in row if isinstance(piece, King)]

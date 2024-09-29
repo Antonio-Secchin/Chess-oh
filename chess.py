@@ -51,6 +51,34 @@ class Piece:
         pos_y = BOARD_Y + row * SQUARE_SIZE
         screen.blit(image, (pos_x, pos_y))
 
+class Custom(Piece):
+    def __init__(self,color, position, *args):
+        super().__init__(color,position)
+        self.components = args   # Guardar as peças passadas como argumento
+        self.points = sum(piece.points for piece in args)  # Somar os pontos das peças
+        for piece in self.components:
+            piece.move(position)
+            
+    def get_valid_moves(self,board):
+        moves = []
+        for piece in self.components:
+            moves += piece.get_valid_moves(board)
+        return moves
+    
+    def draw(self, screen):
+        piece_type = "queen"
+        image_key = f"{self.color}_{piece_type}"
+        image = piece_images[image_key]
+        col, row = self.position
+        pos_x = BOARD_X + col * SQUARE_SIZE
+        pos_y = BOARD_Y + row * SQUARE_SIZE
+        screen.blit(image, (pos_x, pos_y))
+        
+    def move(self, new_position):
+        for piece in self.components:
+            piece.move(new_position)
+        self.position = new_position
+
 class Pawn(Piece):
     points = 1
 
@@ -285,9 +313,13 @@ class Game:
     def set_qtd_plays(self, qtd, color):
         self.qtd_plays[color] = qtd
 
-    def new_piece(self, piece_name, color, position, replace=False):
+    def new_piece(self, piece_name, color, position, replace=False, *args):
         piece_class = globals()[piece_name.lower().capitalize()]
-        piece = piece_class(color, position)
+        if not args:
+            piece = piece_class(color, position)
+        else:
+            print(args)
+            piece = piece_class(color, position, *args)
         board = self.board
         if (board.get_piece_at(position) is not None and not replace):
             return False

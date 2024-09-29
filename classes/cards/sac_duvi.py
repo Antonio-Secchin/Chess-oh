@@ -10,7 +10,7 @@ class Sac_duvi(CardTemplate):
         self.res_qtd = 9
 
     def Effect_cost(self):
-        return (self.cost_value,"queen")
+        return (self.cost_value, self.type)
     
     def Effect(self, ally_Deck = None, ally_Hand = None, enemy_Deck = None, enemy_Hand = None):
-        return (("Place", "Near"), ("Ally","pawn"), ("Qtd",self.res_qtd))
+        return (("Place", "Near"), ("Ally",self.type_res), ("Qtd",self.res_qtd))

@@ -12,4 +12,6 @@ from classes.cards.dir_iguais import Dir_iguais
 
 from classes.cards.troca_justa import Troca_justa
 
-from classes.cards.sac_duvi import Sac_duvi 
+from classes.cards.sac_duvi import Sac_duvi
+
+from classes.cards.poly import Poly

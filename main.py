@@ -1,7 +1,7 @@
 import random
 import pygame
 import classes
-from chess import Game as ChessGame, Pawn, BOARD_X, BOARD_Y, SQUARE_SIZE, BOARD_SIZE, WHITE, BLACK
+from chess import Game as ChessGame, Knight, Queen, BOARD_X, BOARD_Y, SQUARE_SIZE, BOARD_SIZE, WHITE, BLACK
 
 def ler_imagem(caminho: str, tamanho: tuple[int, int]):
     image = pygame.image.load(caminho)
@@ -50,9 +50,9 @@ pygame.display.set_caption("Chess-OH")
 fps = 60
 timer = pygame.time.Clock()
 font = pygame.font.Font('freesansbold.ttf', 44)
-smaller_font = pygame.font.Font('freesansbold.ttf', 36)
+smaller_font = pygame.font.Font('freesansbold.ttf', 18)
 turns = 0
-turn_step = 0
+dir_iguais_warning = False
 player_white = "white"
 player_black = "black"
 
@@ -67,6 +67,7 @@ place = None
 place_piece_type = None
 place_team = None
 place_qtd = 0
+fusion_pieces = list()
 
 whiteQtdPlay = 1
 blackQtdPlay = 1
@@ -98,6 +99,8 @@ dir_iguais_img = ler_imagem('cards/direitos_iguais.png', (x_scale,y_scale))
 
 troca_justa_img = ler_imagem('cards/troca_justa.png',(x_scale, y_scale))
 
+poli_img = ler_imagem('cards/poly.png',(x_scale,y_scale))
+
 cardBackBlack = ler_imagem('cards/cardback_black.jpg',(x_scale,y_scale))
 cardBackWhite = ler_imagem('cards/cardback_white.jpg',(x_scale,y_scale))
 
@@ -117,13 +120,21 @@ dir_iguais = classes.Dir_iguais("Direitos Iguais", dir_iguais_img, "Se for o pri
 
 troca_justa = classes.Troca_justa("Troca Justa", troca_justa_img, "Compre 1 carta. Adicione um peão inimigo em qualquer lugar do campo",x_scale,y_scale)
 
-deck_white = classes.Deck(player_white,20)
+poli = classes.Poly("Fusão",poli_img, "Escolha duas peças para combinar em uma mais forte", x_scale, y_scale)
 
-deck_black = classes.Deck(player_black,20)
+deck_white = classes.Deck(player_white,0)
 
-for _ in range(20):
-    deck_white.AddToDeck(card = sac_duvi)
-    deck_black.AddToDeck(card = troca_justa)
+deck_black = classes.Deck(player_black,0)
+
+for _ in range(3):
+    #Deck White
+    deck_white.AddToDeck(cards = (sac_plan, sac_duvi, gan_duvi, poli, troca_justa))
+    
+    #Deck Black
+    deck_black.AddToDeck(cards = (dir_iguais, gan_duvi, est_alt, iss_meu, poli))
+    
+deck_white.Shuffle()
+deck_black.Shuffle()
 
 handWhite = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 handBlack = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
@@ -138,8 +149,11 @@ card4_pos = (1000,height - y_scale)
 card5_pos = (1000,0)
 
 chess_game = ChessGame()
+handBlack.AddToHand(cards=deck_black.Draw(4))
+handWhite.AddToHand(cards=deck_white.Draw(4))
 
 run = True
+text_color = (255,255,255)
 while run:
     timer.tick(fps)
     screen.fill('dark gray')
@@ -151,6 +165,7 @@ while run:
         chess_game.end_turn()
         firstTurn = False
         handBlack.RemoveFromHand(dir_iguais)
+        dir_iguais_warning = True
     start_turn = chess_game.current_turn
     if drawPhase:
         if start_turn == WHITE:
@@ -158,29 +173,69 @@ while run:
                 handWhite.AddToHand(cards = deck_white.Draw(1))
             firstTurn = False
         else:
-            handBlack.AddToHand(cards = deck_white.Draw(1))
+            handBlack.AddToHand(cards = deck_black.Draw(1))
         drawPhase = False
   
     mouse_pos = pygame.mouse.get_pos()
-    handWhite.DrawHand(screen=screen,mouse_pos=mouse_pos)
+    if start_turn == WHITE:
+        handWhite.DrawHand(screen=screen,mouse_pos=mouse_pos)
+    if start_turn == BLACK:
+        handBlack.DrawHand(screen=screen,mouse_pos=mouse_pos)
 
     # Draw the deck indicators (adjust positions if necessary)
     x = 0
-    for i in range(round(deck_white.actual_size / 4)):
-        screen.blit(cardBackWhite, (width - x_scale - 25 + x, 25 - x))
-        screen.blit(cardBackBlack, (width - x_scale - 25 + x, height - y_scale - x))
-        x += 5
+    if deck_white.actual_size !=0:
+        for i in range(round(deck_white.actual_size / 4) + 1):
+            if start_turn == BLACK:
+                screen.blit(cardBackWhite, (width - x_scale - 25 + x, 25 - x))
+            else:
+                screen.blit(cardBackWhite, (width - x_scale - 25 + x, height - y_scale - x))
+            x += 5
+    if deck_black.actual_size != 0:
+        for i in range(round(deck_black.actual_size / 4) + 1):
+            if start_turn == BLACK:
+                screen.blit(cardBackBlack, (width - x_scale - 25 + x, height - y_scale - x))
+            else:
+                screen.blit(cardBackBlack, (width - x_scale - 25 + x, 25 - x))
+            x += 5
+            
 
-    # event handWhiteling, if quit pressed, then exit game
-
+    text_white_size = smaller_font.render(str(deck_white.actual_size), True, text_color)
+    text_black_size = smaller_font.render(str(deck_black.actual_size),True, text_color)
+    if start_turn == BLACK:
+        text_position = (width - x_scale - 20, 25)
+        screen.blit(text_white_size, text_position)
+        text_position = (width - x_scale - 20, height - y_scale - x)
+        screen.blit(text_black_size, text_position)
+    else:
+        text_position = (width - x_scale - 20, 25)
+        screen.blit(text_black_size, text_position)
+        text_position = (width - x_scale - 20, height - y_scale - x)
+        screen.blit(text_white_size, text_position)
+    
+    
+    if card_playing:
+        text_surface = smaller_font.render(card_playing.text, True, text_color)
+        text_position = (0,200)
+        screen.blit(text_surface, text_position)
+    if dir_iguais_warning and start_turn == BLACK:
+        text_surface = smaller_font.render("As pretas começaram por conta da carta Direitos Iguais", True, text_color)
+        text_position = (0, 100)
+        screen.blit(text_surface, text_position)
+    else:
+        dir_iguais_warning = False
+    
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
                 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not chess_game.game_over:
             mouse_x, mouse_y = event.pos
-            
-            auxCard = handWhite.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
+            if start_turn == WHITE:
+                auxCard = handWhite.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
+            else:
+                auxCard = handBlack.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
             if(auxCard and card_playing == None and auxCard != dir_iguais):
                 playing_card = True
                 card_playing = auxCard
@@ -199,8 +254,9 @@ while run:
                         place_qtd -= 1
                     if place == "Near":
                         if chess_game.checkPlacement(clicked_pos, place_team):
-                            chess_game.new_piece(place_piece_type, place_team, clicked_pos)
+                            chess_game.new_piece(place_piece_type, place_team, clicked_pos, False, *(fusion_pieces))
                             place_qtd -=1
+                            fusion_pieces = list()
                 
                 elif place_qtd == 0:
                     placing_piece = False
@@ -208,20 +264,32 @@ while run:
                     place_piece_type = None
                     place_team = None
                 
-                if selected_piece and pay_cost_card != 0 and (cost_type == "Any" or str(selected_piece) == cost_type):
+                if selected_piece and pay_cost_card != 0 and cost_type == "Fusion" and pay_cost_card > 0:
+                    pay_cost_card -=1
+                    fusion_pieces.append(selected_piece)
+                    chess_game.remove_piece(selected_piece)
+                    
+                
+                elif selected_piece and pay_cost_card != 0 and (cost_type == "Any" or str(selected_piece) == cost_type):
                     pay_cost_card = max(0,pay_cost_card - selected_piece.points)
                     chess_game.remove_piece(selected_piece)
 
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_e:
-                handWhite.AddToHand(cards=deck_white.Draw(1))
                 
             if event.key == pygame.K_f:
                 iss_meu.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
+            
+            if event.key == pygame.K_0:
+                k = Knight(WHITE, [3,3])
+                q = Queen(WHITE,[3,4])
+                chess_game.new_piece("custom",WHITE,(5,5),False, k,q)
 
     if playing_card and pay_cost_card == 0 and not placing_piece:
-        cardEffect = card_playing.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
+        if start_turn == WHITE:
+            cardEffect = card_playing.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
+        else:
+            cardEffect = card_playing.Effect(ally_Deck = deck_black, ally_Hand = handBlack, enemy_Deck = deck_white)
         aux_turn = chess_game.current_turn
         if cardEffect:
             for effect,qtd in cardEffect:
@@ -247,8 +315,10 @@ while run:
                 if effect == "Qtd":
                     place_qtd = qtd
                         
-                    
-        handWhite.RemoveFromHand(card_playing)
+        if start_turn == WHITE:         
+            handWhite.RemoveFromHand(card_playing)
+        else:
+            handBlack.RemoveFromHand(card_playing)
         playing_card = False
         card_playing = None
         cost_type = None

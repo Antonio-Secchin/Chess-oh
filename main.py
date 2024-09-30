@@ -1,7 +1,7 @@
 import random
 import pygame
 import classes
-from chess import Game as ChessGame, Knight, Queen, BOARD_X, BOARD_Y, SQUARE_SIZE, BOARD_SIZE, WHITE, BLACK
+from chess import Game as ChessGame, BOARD_X, BOARD_Y, SQUARE_SIZE, BOARD_SIZE, WHITE, BLACK
 
 def ler_imagem(caminho: str, tamanho: tuple[int, int]):
     image = pygame.image.load(caminho)
@@ -273,17 +273,6 @@ while run:
                 elif selected_piece and pay_cost_card != 0 and (cost_type == "Any" or str(selected_piece) == cost_type):
                     pay_cost_card = max(0,pay_cost_card - selected_piece.points)
                     chess_game.remove_piece(selected_piece)
-
-
-        if event.type == pygame.KEYDOWN:
-                
-            if event.key == pygame.K_f:
-                iss_meu.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
-            
-            if event.key == pygame.K_0:
-                k = Knight(WHITE, [3,3])
-                q = Queen(WHITE,[3,4])
-                chess_game.new_piece("custom",WHITE,(5,5),False, k,q)
 
     if playing_card and pay_cost_card == 0 and not placing_piece:
         if start_turn == WHITE:

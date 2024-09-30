@@ -318,7 +318,6 @@ class Game:
         if not args:
             piece = piece_class(color, position)
         else:
-            print(args)
             piece = piece_class(color, position, *args)
         board = self.board
         if (board.get_piece_at(position) is not None and not replace):
@@ -365,15 +364,10 @@ class Game:
 
     def end_turn(self):
         self.current_turn = BLACK if self.current_turn == WHITE else WHITE
-        if self.board.is_checkmate(self.current_turn):
-            self.game_over = True
-            self.winner = WHITE if self.current_turn == BLACK else BLACK
         kings = self._find_kings()
         if len(kings) == 1:
             self.game_over = True
             self.winner = WHITE if kings[0].color == WHITE else BLACK            
-        elif self.board.is_check(self.current_turn):
-            print(f"{self.current_turn} is in check!")
             
     def checkPlacement(self, center_position, team):
         return self.board.check_surroundings(center_position, team)
@@ -390,7 +384,7 @@ class Game:
                                     BOARD_Y + move[1] * SQUARE_SIZE + SQUARE_SIZE // 2), 10)
 
         if self.game_over:
-            font = pygame.font.Font(None, 36)
+            font = pygame.font.Font("freesansbold.ttf", 36)
             text = font.render(f"{self.winner} wins!", True, (255, 0, 0))
             screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
 

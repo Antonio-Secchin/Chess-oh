@@ -1,9 +1,13 @@
-import copy
 import random
 import pygame
 import classes
-from additions import *
-import constants as c
+from chess import Game as ChessGame, BOARD_X, BOARD_Y, SQUARE_SIZE, BOARD_SIZE, WHITE, BLACK
+
+def ler_imagem(caminho: str, tamanho: tuple[int, int]):
+    image = pygame.image.load(caminho)
+    image = image.convert_alpha()
+    image = pygame.transform.smoothscale(image, tamanho)
+    return image
 
 # Função para calcular a posição de uma peça no tabuleiro
 def calcular_posicao_tabuleiro(coluna, linha, board_x, board_y, square_width, square_height):
@@ -41,13 +45,14 @@ def desenhar_pontuacoes(screen, font, pieces_positions, points, board_x, board_y
 pygame.init()
 width = 1200
 height = 1000
-screen = pygame.display.set_mode([width,height])
+screen = pygame.display.set_mode([width, height])
 pygame.display.set_caption("Chess-OH")
 fps = 60
 timer = pygame.time.Clock()
 font = pygame.font.Font('freesansbold.ttf', 44)
-smaller_font = pygame.font.Font('freesansbold.ttf', 36)
+smaller_font = pygame.font.Font('freesansbold.ttf', 18)
 turns = 0
+dir_iguais_warning = False
 player_white = "white"
 player_black = "black"
 
@@ -57,6 +62,12 @@ pay_cost_card = 0
 playing_card = False
 card_playing = None
 cost_type = None
+placing_piece = False
+place = None
+place_piece_type = None
+place_team = None
+place_qtd = 0
+fusion_pieces = list()
 
 whiteQtdPlay = 1
 blackQtdPlay = 1
@@ -67,25 +78,31 @@ firstTurn = True
 x_scale = 150
 y_scale = 250
 # Carregar as imagens das cartas (suponha que você tenha as imagens)
-board = c.ler_imagem('xadrez/board.png',(700,700))
+board = ler_imagem('xadrez/board.png',(700,700))
 boardSquaHeight = board.get_height()/8
 boardSquaWidth = board.get_width()/8
 
 
-exp_duvi_img = c.ler_imagem('cards/exploracao_duvidosa.png', (x_scale,y_scale))
+exp_duvi_img = ler_imagem('cards/exploracao_duvidosa.png', (x_scale,y_scale))
 
-gan_duvi_img = c.ler_imagem('cards/ganancia_duvidosa.png', (x_scale,y_scale))
+gan_duvi_img = ler_imagem('cards/ganancia_duvidosa.png', (x_scale,y_scale))
 
-sac_plan_img = c.ler_imagem('cards/sacrificio_planejado.png', (x_scale,y_scale))
+sac_duvi_img = ler_imagem('cards/sacrificio_duvidoso.png',(x_scale,y_scale))
 
-isso_meu_img = c.ler_imagem('cards/isso_e_meu.jpeg', (x_scale,y_scale))
+sac_plan_img = ler_imagem('cards/sacrificio_planejado.png', (x_scale,y_scale))
 
-est_alt_img = c.ler_imagem('cards/Estrategia_alt.jpeg', (x_scale,y_scale))
+isso_meu_img = ler_imagem('cards/Isso_e_meu.jpeg', (x_scale,y_scale))
 
-dir_iguais_img = c.ler_imagem('cards/direitos_iguais.png', (x_scale,y_scale))
+est_alt_img = ler_imagem('cards/Estrategia_alt.jpeg', (x_scale,y_scale))
 
-cardBackBlack = c.ler_imagem('cards/cardback_black.jpg',(x_scale,y_scale))
-cardBackWhite = c.ler_imagem('cards/cardback_white.jpg',(x_scale,y_scale))
+dir_iguais_img = ler_imagem('cards/direitos_iguais.png', (x_scale,y_scale))
+
+troca_justa_img = ler_imagem('cards/troca_justa.png',(x_scale, y_scale))
+
+poli_img = ler_imagem('cards/poly.png',(x_scale,y_scale))
+
+cardBackBlack = ler_imagem('cards/cardback_black.jpg',(x_scale,y_scale))
+cardBackWhite = ler_imagem('cards/cardback_white.jpg',(x_scale,y_scale))
 
 #Criando os templates das cartas
 
@@ -93,19 +110,31 @@ sac_plan = classes.Sac_pla("Sacrifício Planejado", sac_plan_img, "Sacrifique um
 
 iss_meu = classes.Isso_meu("Isso é Meu", isso_meu_img, "Compre a carta do topo do deck do oponente", x_scale, y_scale)
 
+sac_duvi = classes.Sac_duvi("Sacrifício Duvidoso", sac_duvi_img, "Sacrifique sua Rainha e posicione nove peões no tabuleiro. (Eles tem que estar conectado a uma peça aliada)", x_scale, y_scale)
+
 gan_duvi = classes.Gan_duv("Ganância Duvidosa", gan_duvi_img, "Uma vez por turno, sacrifique dois ou mais pontos. Compre duas Cartas", x_scale, y_scale)
 
 est_alt = classes.Est_alt("Estratégia Alternativa", est_alt_img, "Envie para o cemitério 3 cartas do deck do oponente", x_scale, y_scale)
 
 dir_iguais = classes.Dir_iguais("Direitos Iguais", dir_iguais_img, "Se for o primeiro turno do jogo e você estiver jogando com as peças pretas. Ative essa carta da sua mão. Pule o turno do oponente", x_scale, y_scale)
 
-deck_white = classes.Deck(player_white,20)
+troca_justa = classes.Troca_justa("Troca Justa", troca_justa_img, "Compre 1 carta. Adicione um peão inimigo em qualquer lugar do campo",x_scale,y_scale)
 
-deck_black = classes.Deck(player_black,20)
+poli = classes.Poly("Fusão",poli_img, "Escolha duas peças para combinar em uma mais forte", x_scale, y_scale)
 
-for _ in range(20):
-    deck_white.AddToDeck(card = sac_plan)
-    deck_black.AddToDeck(card = est_alt)
+deck_white = classes.Deck(player_white,0)
+
+deck_black = classes.Deck(player_black,0)
+
+for _ in range(3):
+    #Deck White
+    deck_white.AddToDeck(cards = (sac_plan, sac_duvi, gan_duvi, poli, troca_justa))
+    
+    #Deck Black
+    deck_black.AddToDeck(cards = (dir_iguais, gan_duvi, est_alt, iss_meu, poli))
+    
+deck_white.Shuffle()
+deck_black.Shuffle()
 
 handWhite = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
 handBlack = classes.Hand(startHand=(50,height-y_scale),endHand=(1000,height - y_scale))
@@ -119,273 +148,174 @@ card3_pos = (420, height - y_scale)
 card4_pos = (1000,height - y_scale)
 card5_pos = (1000,0)
 
+chess_game = ChessGame()
+handBlack.AddToHand(cards=deck_black.Draw(4))
+handWhite.AddToHand(cards=deck_white.Draw(4))
+
 run = True
+text_color = (255,255,255)
 while run:
-    # run game at our framerate and fill screen with bg color
     timer.tick(fps)
-    if c.counter < 30:
-        c.counter += 1
-    else:
-        c.counter = 0
     screen.fill('dark gray')
     
-    draw_board()
-    draw_pieces()
-    draw_captured()
-    draw_check()
+    # Draw chess game
+    chess_game.draw(screen)
 
     if handBlack.Contains(dir_iguais) and firstTurn:
-        c.turn_step = 2
+        chess_game.end_turn()
         firstTurn = False
         handBlack.RemoveFromHand(dir_iguais)
-    last_turn_step = c.turn_step
+        dir_iguais_warning = True
+    start_turn = chess_game.current_turn
     if drawPhase:
-        if last_turn_step < 2:
+        if start_turn == WHITE:
             if not firstTurn:
                 handWhite.AddToHand(cards = deck_white.Draw(1))
             firstTurn = False
         else:
-            handBlack.AddToHand(cards = deck_white.Draw(1))
-            #c.turn_step = 0
+            handBlack.AddToHand(cards = deck_black.Draw(1))
         drawPhase = False
-
-    # Desenha os movimentos da peça
-    if c.selection is not None:
-        c.valid_moves = check_valid_moves()
-        draw_valid(c.valid_moves)
-    else:
-        c.valid_moves = []
-    
+  
     mouse_pos = pygame.mouse.get_pos()
-    handWhite.DrawHand(screen=screen,mouse_pos=mouse_pos)
+    if start_turn == WHITE:
+        handWhite.DrawHand(screen=screen,mouse_pos=mouse_pos)
+    if start_turn == BLACK:
+        handBlack.DrawHand(screen=screen,mouse_pos=mouse_pos)
 
     # Draw the deck indicators (adjust positions if necessary)
     x = 0
-    for i in range(round(deck_white.actual_size / 4)):
-        screen.blit(cardBackWhite, (width - x_scale - 25 + x, 25 - x))
-        screen.blit(cardBackBlack, (width - x_scale - 25 + x, height - y_scale - x))
-        x += 5
+    if deck_white.actual_size !=0:
+        for i in range(round(deck_white.actual_size / 4) + 1):
+            if start_turn == BLACK:
+                screen.blit(cardBackWhite, (width - x_scale - 25 + x, 25 - x))
+            else:
+                screen.blit(cardBackWhite, (width - x_scale - 25 + x, height - y_scale - x))
+            x += 5
+    if deck_black.actual_size != 0:
+        for i in range(round(deck_black.actual_size / 4) + 1):
+            if start_turn == BLACK:
+                screen.blit(cardBackBlack, (width - x_scale - 25 + x, height - y_scale - x))
+            else:
+                screen.blit(cardBackBlack, (width - x_scale - 25 + x, 25 - x))
+            x += 5
+            
 
-    # event handWhiteling, if quit pressed, then exit game
-
+    text_white_size = smaller_font.render(str(deck_white.actual_size), True, text_color)
+    text_black_size = smaller_font.render(str(deck_black.actual_size),True, text_color)
+    if start_turn == BLACK:
+        text_position = (width - x_scale - 20, 25)
+        screen.blit(text_white_size, text_position)
+        text_position = (width - x_scale - 20, height - y_scale - x)
+        screen.blit(text_black_size, text_position)
+    else:
+        text_position = (width - x_scale - 20, 25)
+        screen.blit(text_black_size, text_position)
+        text_position = (width - x_scale - 20, height - y_scale - x)
+        screen.blit(text_white_size, text_position)
+    
+    
+    if card_playing:
+        text_surface = smaller_font.render(card_playing.text, True, text_color)
+        text_position = (0,200)
+        screen.blit(text_surface, text_position)
+    if dir_iguais_warning and start_turn == BLACK:
+        text_surface = smaller_font.render("As pretas começaram por conta da carta Direitos Iguais", True, text_color)
+        text_position = (0, 100)
+        screen.blit(text_surface, text_position)
+    else:
+        dir_iguais_warning = False
+    
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
                 
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not c.game_over:
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not chess_game.game_over:
             mouse_x, mouse_y = event.pos
-            auxCard = handWhite.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
-            if(auxCard and card_playing == None):
+            if start_turn == WHITE:
+                auxCard = handWhite.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
+            else:
+                auxCard = handBlack.Get_card_at_mouse(mouse_pos=(mouse_x, mouse_y))
+            if(auxCard and card_playing == None and auxCard != dir_iguais):
                 playing_card = True
                 card_playing = auxCard
                 cost = auxCard.Effect_cost()
                 pay_cost_card = cost[0]
                 #types: Any, peca especifica, place
                 cost_type = cost[1]
-        
-            if c.board_x <= mouse_x < c.board_x + c.board_width and c.board_y <= mouse_y < c.board_y + c.board_height:
-                x_coord = int((mouse_x - c.board_x) // c.square_size)
-                y_coord = int((mouse_y - c.board_y) // c.square_size)
-                click_coords = (x_coord, y_coord)
-                if c.turn_step <= 1:
-
-                    if pay_cost_card != 0:
-                        if click_coords in c.white_locations:
-                            c.selection = c.white_locations.index(click_coords)
-                            selected_piece = c.white_pieces[c.selection]
-                            if cost_type == "Any" or cost_type == selected_piece:
-                                c.white_pieces.pop(c.selection)
-                                c.white_locations.pop(c.selection)
-                                c.white_moved.pop(c.selection)
-                                pay_cost_card = max(0,pay_cost_card -c.points[selected_piece])
-                                c.selection = None
-
-                    if c.forfeit_button_rect.collidepoint(mouse_x, mouse_y):
-                        c.winner = 'black'
-
-                    if click_coords in c.white_locations:
-                        c.selection = c.white_locations.index(click_coords)
-                        selected_piece = c.white_pieces[c.selection]
-                        if c.turn_step == 0:
-                            c.turn_step = 1
-
-                    if click_coords in c.valid_moves and c.selection is not None:
-                        c.white_ep = check_ep(c.white_locations[c.selection], click_coords)
-                        c.white_locations[c.selection] = click_coords
-                        c.white_moved[c.selection] = True
-
-                        # Handle capturing black pieces
-                        if click_coords in c.black_locations:
-                            black_piece = c.black_locations.index(click_coords)
-                            c.captured_pieces_white.append(c.black_pieces[black_piece])
-                            if c.black_pieces[black_piece] == 'king':
-                                c.winner = 'white'
-                            c.black_pieces.pop(black_piece)
-                            c.black_locations.pop(black_piece)
-                            c.black_moved.pop(black_piece)
-                        
-                        # Handle en passant
-                        if c.black_ep is not None and click_coords == c.black_ep:
-                            black_piece = c.black_locations.index((c.black_ep[0], c.black_ep[1] - 1))
-                            c.captured_pieces_white.append(c.black_pieces[black_piece])
-                            c.black_pieces.pop(black_piece)
-                            c.black_locations.pop(black_piece)
-                            c.black_moved.pop(black_piece)
-                        
-                        # Reset c.selection BEFORE updating options
-                        c.selection = None
-                        c.valid_moves = []
-                        
-                        # Update options
-                        c.black_options = check_options(c.black_pieces, c.black_locations, 'black')
-                        c.white_options = check_options(c.white_pieces, c.white_locations, 'white')
-                        if whiteQtdPlay == 1:
-                                    c.turn_step = 2
-                                    whiteQtdPlay = 1
-                        else:
-                            whiteQtdPlay-=1
-                    # add option to castle
-                    elif c.selection is not None and selected_piece == 'king':
-                        for q in range(len(castling_moves)):
-                            if click_coords == castling_moves[q][0]:
-                                c.white_locations[c.selection] = click_coords
-                                c.white_moved[c.selection] = True
-                                if click_coords == (1, 0):
-                                    rook_coords = (0, 0)
-                                else:
-                                    rook_coords = (7, 0)
-                                rook_index = c.white_locations.index(rook_coords)
-                                c.white_locations[rook_index] = castling_moves[q][1]
-                                c.black_options = check_options(c.black_pieces, c.black_locations, 'black')
-                                c.white_options = check_options(c.white_pieces, c.white_locations, 'white')
-                                if whiteQtdPlay == 0:
-                                    c.turn_step = 2
-                                    whiteQtdPlay = 1
-                                else:
-                                    whiteQtdPlay-=1
-                                c.selection = None
-                                c.valid_moves = []
-                if c.turn_step > 1:
-                    if c.forfeit_button_rect.collidepoint(mouse_x, mouse_y):
-                        c.winner = 'white'
-
-                    if click_coords in c.black_locations:
-                        c.selection = c.black_locations.index(click_coords)
-                        selected_piece = c.black_pieces[c.selection]
-                        if c.turn_step == 2:
-                            c.turn_step = 3
-
-                    if click_coords in c.valid_moves and c.selection is not None:
-                        c.black_ep = check_ep(c.black_locations[c.selection], click_coords)
-                        c.black_locations[c.selection] = click_coords
-                        c.black_moved[c.selection] = True
-
-                        # Handle capturing white pieces
-                        if click_coords in c.white_locations:
-                            white_piece = c.white_locations.index(click_coords)
-                            c.captured_pieces_black.append(c.white_pieces[white_piece])
-                            if c.white_pieces[white_piece] == 'king':
-                                c.winner = 'black'
-                            c.white_pieces.pop(white_piece)
-                            c.white_locations.pop(white_piece)
-                            c.white_moved.pop(white_piece)
-                        
-                        # Handle en passant
-                        if c.white_ep is not None and click_coords == c.white_ep:
-                            white_piece = c.white_locations.index((c.white_ep[0], c.white_ep[1] + 1))
-                            c.captured_pieces_black.append(c.white_pieces[white_piece])
-                            c.white_pieces.pop(white_piece)
-                            c.white_locations.pop(white_piece)
-                            c.white_moved.pop(white_piece)
-                        
-                        # Reset c.selection BEFORE updating options
-                        c.selection = None
-                        c.valid_moves = []
-                        
-                        # Update options
-                        c.black_options = check_options(c.black_pieces, c.black_locations, 'black')
-                        c.white_options = check_options(c.white_pieces, c.white_locations, 'white')
-                        c.turn_step = 0
-                    # add option to castle
-                    elif c.selection is not None and selected_piece == 'king':
-                        for q in range(len(castling_moves)):
-                            if click_coords == castling_moves[q][0]:
-                                c.black_locations[c.selection] = click_coords
-                                c.black_moved[c.selection] = True
-                                if click_coords == (1, 7):
-                                    rook_coords = (0, 7)
-                                else:
-                                    rook_coords = (7, 7)
-                                rook_index = c.black_locations.index(rook_coords)
-                                c.black_locations[rook_index] = castling_moves[q][1]
-                                c.black_options = check_options(c.black_pieces, c.black_locations, 'black')
-                                c.white_options = check_options(c.white_pieces, c.white_locations, 'white')
-                                c.turn_step = 0
-                                c.selection = None
-                                c.valid_moves = []
-            else:
-                # Handle clicks outside the board (e.g., promotion c.selection)
-                check_promo_select()
-
-        if event.type == pygame.KEYDOWN and c.game_over:
-            if event.key == pygame.K_RETURN:
-                c.game_over = False
-                c.winner = ''
-                c.white_pieces = ['rook', 'knight', 'bishop', 'king', 'queen', 'bishop', 'knight', 'rook',
-                                'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
-                c.white_locations = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0),
-                                (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1)]
-                c.white_moved = [False, False, False, False, False, False, False, False,
-                            False, False, False, False, False, False, False, False]
-                c.black_pieces = ['rook', 'knight', 'bishop', 'king', 'queen', 'bishop', 'knight', 'rook',
-                                'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
-                c.black_locations = [(0, 7), (1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7),
-                                (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)]
-                c.black_moved = [False, False, False, False, False, False, False, False,
-                            False, False, False, False, False, False, False, False]
-                c.captured_pieces_white = []
-                c.captured_pieces_black = []
-                c.turn_step = 0
-                c.selection = None
-                c.valid_moves = []
-                c.black_options = check_options(c.black_pieces, c.black_locations, 'black')
-                c.white_options = check_options(c.white_pieces, c.white_locations, 'white')
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_e:
-                handWhite.AddToHand(cards=deck_white.Draw(1))
+            
+            # Handle chess moves
+            if BOARD_X <= mouse_x < BOARD_X + BOARD_SIZE * SQUARE_SIZE and BOARD_Y <= mouse_y < BOARD_Y + BOARD_SIZE * SQUARE_SIZE:
+                selected_piece, clicked_pos = chess_game.handle_click((mouse_x, mouse_y))
                 
-            if event.key == pygame.K_f:
-                iss_meu.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
+                if not selected_piece and placing_piece and place_qtd != 0:
+                    if place == "Any":
+                        chess_game.new_piece(place_piece_type, place_team, clicked_pos)
+                        place_qtd -= 1
+                    if place == "Near":
+                        if chess_game.checkPlacement(clicked_pos, place_team):
+                            chess_game.new_piece(place_piece_type, place_team, clicked_pos, False, *(fusion_pieces))
+                            place_qtd -=1
+                            fusion_pieces = list()
+                
+                elif place_qtd == 0:
+                    placing_piece = False
+                    place = None
+                    place_piece_type = None
+                    place_team = None
+                
+                if selected_piece and pay_cost_card != 0 and cost_type == "Fusion" and pay_cost_card > 0:
+                    pay_cost_card -=1
+                    fusion_pieces.append(selected_piece)
+                    chess_game.remove_piece(selected_piece)
+                    
+                
+                elif selected_piece and pay_cost_card != 0 and (cost_type == "Any" or str(selected_piece) == cost_type):
+                    pay_cost_card = max(0,pay_cost_card - selected_piece.points)
+                    chess_game.remove_piece(selected_piece)
 
-    if playing_card and pay_cost_card == 0:
-        cardEffect = card_playing.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
-        turn_step_aux = c.turn_step
+    if playing_card and pay_cost_card == 0 and not placing_piece:
+        if start_turn == WHITE:
+            cardEffect = card_playing.Effect(ally_Deck = deck_white, ally_Hand = handWhite, enemy_Deck = deck_black)
+        else:
+            cardEffect = card_playing.Effect(ally_Deck = deck_black, ally_Hand = handBlack, enemy_Deck = deck_white)
+        aux_turn = chess_game.current_turn
         if cardEffect:
             for effect,qtd in cardEffect:
                 if effect == "Skip" and qtd == 1:
-                    if turn_step_aux < 2:
-                        c.turn_step = 2
-                    else:
-                        c.turn_step = 0
+                    chess_game.end_turn()
                 if effect == "QtdPlay":
-                    if turn_step_aux < 2:
-                        whiteQtdPlay = 2
+                    chess_game.set_qtd_plays(qtd, aux_turn)
+                if effect == "Place":
+                    placing_piece = True
+                    place = qtd
+                if effect == "Enemy":
+                    place_piece_type = qtd
+                    if chess_game.current_turn == WHITE:
+                        place_team = BLACK
                     else:
-                        blackQtdPlay = 2
-        handWhite.RemoveFromHand(card_playing)
+                        place_team = WHITE
+                if effect == "Ally":
+                    place_piece_type = qtd
+                    if chess_game.current_turn == WHITE:
+                        place_team = WHITE
+                    else:
+                        place_team = BLACK
+                if effect == "Qtd":
+                    place_qtd = qtd
+                        
+        if start_turn == WHITE:         
+            handWhite.RemoveFromHand(card_playing)
+        else:
+            handBlack.RemoveFromHand(card_playing)
         playing_card = False
         card_playing = None
         cost_type = None
         cost = None
         cardEffect = None
 
-    if last_turn_step != c.turn_step and (c.turn_step == 0 or c.turn_step == 2):
+    if start_turn != chess_game.current_turn:
         drawPhase = True
-
-    if c.winner != '':
-        c.game_over = True
-        draw_game_over()
 
     pygame.display.flip()
 

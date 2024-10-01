@@ -1,7 +1,11 @@
 # Chess-oh
 Um jogo de xadrez com cartas estilo yu gi oh
 
+Conceito Principal:
 
-Fazer uma classe tipo PEÇA onde cada tipo de peça teria sua classe própria que só teria uma lista de string que seria passada para PEÇA falando quais movimentos ela pode fazer, 
-o objetivo é impedir que o movimento seja repetido em todas as peças e tipos de peças e se for criar uma peça com mais de um movimento é só passar ambos movimentos como string 
-para o tipo PEÇA resolver
+Chess-Oh é um jogo de xadrez que utiliza de cartas para modificar as regras e o desenvolvimento de um jogo de xadrez.
+Podendo criar uma peça que é uma rainha com um cavalo, ou sacrificar sua rainha para nove peões
+
+Historia:
+
+Ao jogar xadrez, nosso protagonista sempre perdia os jogos, por achar a rainha muito forte e odiava que só as brancas começavam a jogar, ele decide criar uma nova maneira de jogar, pra que aprender a jogar se eu posso mudar a maneira de jogar? Ele pensa. Logo ele cria o Chess-Oh e começa a vender seus pacotes para as pessoas do mundo e espalhar essa sua inovação
